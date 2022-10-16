@@ -1,4 +1,4 @@
-library liquidity_math;
+library tick_delta_math;
 
 use core::num::*;
 use std::{
@@ -9,7 +9,7 @@ use std::{
 
 // Returns the delta sum for given liquidity
 // need to create I128 lib if we are going to use this
-fn delta_sum (liquidity: U128, delta: U128) -> U128 {
+fn delta_math (liquidity: U128, delta: U128) -> U128 {
     let delta_sum = liquidity + delta;
     let delta_sub = liquidity - delta;
 
