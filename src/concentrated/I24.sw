@@ -65,16 +65,17 @@ impl I24 {
         }
     }
 
-    pub fn abs(self) -> u32 {
-        let mut abs: u32 =0;
-        if self > I24::new() { 
-            abs = self.underlying - Self::indent();
+    
+    pub fn abs() -> Self {
+        if self.underlying >= ~Self::indent() {
+            return self;
         } else {
-            abs = Self::indent() - self.underlying;
-        };
-
-        abs
-    }
+            let abs_self: u32 = ~Self::indent() + (~Self::indent() - self.underlying);
+            Self {
+                underlying: abs_self
+            }
+        }
+    } 
 
     /// The smallest value that can be represented by this integer type.
     pub fn min() -> Self {
@@ -169,5 +170,3 @@ impl core::ops::Divide for I24 {
         res
     }
 }
-
-impl core::ops::
