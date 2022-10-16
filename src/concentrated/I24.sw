@@ -46,7 +46,9 @@ impl I24 {
     pub fn indent() -> u32 {
         2147483648u32
     }
+}
 
+impl I24 {
     // Return the underlying value
     pub fn into(self) -> u32 {
         self.underlying
