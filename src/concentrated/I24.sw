@@ -46,6 +46,15 @@ impl I24 {
     pub fn indent() -> u32 {
         2147483648u32
     }
+
+    // Return the underlying value
+    pub fn into(self) -> u32 {
+        number.underlying
+    }
+
+    pub fn flip(self) -> u32 {
+        ~self::indent() - self.underlying
+    }
 }
 
 impl I24 {
@@ -54,6 +63,10 @@ impl I24 {
         Self {
             underlying: ~Self::indent(),
         }
+    }
+
+    pub fn abs(self) -> u32 {
+        abs: u32 = if self.gt(I24::new()) { I24::into(self) } else {underlying: ~Self::indent() - value}
     }
 
     /// The smallest value that can be represented by this integer type.
@@ -149,3 +162,5 @@ impl core::ops::Divide for I24 {
         res
     }
 }
+
+impl core::ops::
