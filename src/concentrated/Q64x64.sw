@@ -57,7 +57,7 @@ impl core::ops::Subtract for Q64x64 {
     /// Subtract a Q64x64 from a Q64x64. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value >= other.value);
+        assert(self.value > other.value || self.value == other.value);
 
         Self {
             value: self.value - other.value,
