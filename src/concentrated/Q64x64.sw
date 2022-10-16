@@ -4,7 +4,7 @@ library fixed_num;
 
 use core::num::*;
 use std::{
-    u128::U128,
+    u128::*,
     u256::U256,
     assert::assert,
     math::*,
@@ -21,7 +21,7 @@ impl Q64x64 {
     }
 
     pub fn zero() -> Self {
-        Self { value: U128::from(0,0) }
+        Self { value: ~U128::from(0,0) }
     }
 
     pub fn bits() -> u32 {
@@ -46,7 +46,7 @@ impl core::ops::Ord for Q64x64 {
 }
 
 impl core::ops::Add for Q64x64 {
-    /// Add a UFP64 to a UFP64. Panics on overflow.
+    /// Add a Q64x64 to a Q64x64. Panics on overflow.
     fn add(self, other: Self) -> Self {
         Self {
             value: self.value + other.value,
@@ -86,9 +86,9 @@ impl core::ops::Multiply for Q64x64 {
 }
 
 impl core::ops::Divide for Q64x64 {
-    /// Divide a UFP64 by a UFP64. Panics if divisor is zero.
+    /// Divide a Q64x64 by a Q64x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        let zero = ~UFP64::zero();
+        let zero = ~Q64x64::zero();
         assert(divisor != zero);
 
         let denominator = ~U256::from(0, ~Self::denominator());
@@ -112,8 +112,8 @@ impl core::ops::Divide for Q64x64 {
     }
 }
 
-impl UFP64 {
-    /// Creates UFP64 that correponds to a unsigned integer
+impl Q64x64 {
+    /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
         Self {
             value: ~Self::denominator() * uint,
@@ -121,8 +121,8 @@ impl UFP64 {
     }
 }
 
-impl Root for UFP64 {
-    /// Sqaure root for UFP64
+impl Root for Q64x64 {
+    /// Sqaure root for Q64x64
     fn sqrt(self) -> Self {
         let nominator_root = self.value.sqrt();
         // Need to multiple over 2 ^ 16, as the sqare root of the denominator 
@@ -134,10 +134,10 @@ impl Root for UFP64 {
     }
 }
 
-impl Exponentiate for UFP64 {
+impl Exponentiate for Q64x64 {
     /// Power function. x ^ exponent
     fn pow(self, exponent: Self) -> Self {
-        let demoninator_power = ~UFP64::denominator();
+        let demoninator_power = ~Q64x64::denominator();
         let exponent_int = exponent.value >> 32;
         let nominator_pow = ~U128::from(0, self.value).pow(~U128::from(0, exponent_int));
         // As we need to ensure the fixed point structure 
@@ -156,18 +156,18 @@ impl Exponentiate for UFP64 {
     }
 }
 
-impl Exponent for UFP64 {
+impl Exponent for Q64x64 {
     /// Exponent function. e ^ x
     fn exp(exponent: Self) -> Self {
-        let one = ~UFP64::from_uint(1);
+        let one = ~Q64x64::from_uint(1);
 
         //coefficients in the Taylor series up to the seventh power
-        let p2 = ~UFP64::from(2147483648); // p2 == 1 / 2!
-        let p3 = ~UFP64::from(715827882); // p3 == 1 / 3!
-        let p4 = ~UFP64::from(178956970); // p4 == 1 / 4!
-        let p5 = ~UFP64::from(35791394); // p5 == 1 / 5!
-        let p6 = ~UFP64::from(5965232); // p6 == 1 / 6!
-        let p7 = ~UFP64::from(852176); // p7 == 1 / 7!
+        let p2 = ~Q64x64::from(2147483648); // p2 == 1 / 2!
+        let p3 = ~Q64x64::from(715827882); // p3 == 1 / 3!
+        let p4 = ~Q64x64::from(178956970); // p4 == 1 / 4!
+        let p5 = ~Q64x64::from(35791394); // p5 == 1 / 5!
+        let p6 = ~Q64x64::from(5965232); // p6 == 1 / 6!
+        let p7 = ~Q64x64::from(852176); // p7 == 1 / 7!
 
         // common technique to counter loosing sugnifucant numbers in usual approximation
         // Taylor series approximation of exponantiation function minus 1. The subtraction is done to deal with accuracy issues
