@@ -4,7 +4,7 @@ library fixed_num;
 
 use core::num::*;
 use std::{
-    u128::U128,
+    u128::*,
     u256::U256,
     assert::assert,
     math::*,
@@ -120,8 +120,6 @@ impl UFP64 {
         }
     }
 }
-
-
 
 impl Root for UFP64 {
     /// Sqaure root for UFP64
