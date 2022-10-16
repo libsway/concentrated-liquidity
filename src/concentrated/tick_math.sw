@@ -14,7 +14,7 @@ use std::{
 use Q64x64::Q64x64;
 
 const MIN_TICK = I24 {
-    underlying: ~I24::neg_from(MAX_TICK)
+    underlying: neg_from(MAX_TICK)
 };
 
 const MAX_TICK = I24 {
@@ -22,11 +22,11 @@ const MAX_TICK = I24 {
 };
 
 const MIN_SQRT = Q64x64 {
-    value: Q64x64::from(get_price_at_tick(MIN_TICK))
+    value: ~Q64x64::from(get_price_at_tick(MIN_TICK))
 };
 
 const MAX_SQRT = Q64x64 {
-    value: get_price_at_tick(MAX_TICK)
+    value: ~Q64x64::from(get_price_at_tick(MAX_TICK))
 };
 
 pub fn get_price_at_tick(tick: I24) -> u32 {

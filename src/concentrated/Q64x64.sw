@@ -79,7 +79,7 @@ impl core::ops::Multiply for Q64x64 {
         }
 
         Self {
-            value: U128::from(res_u256.c, res_u256.d),
+            value: ~U128::from(res_u256.c, res_u256.d),
         }
     }
 }
@@ -114,8 +114,9 @@ impl core::ops::Divide for Q64x64 {
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
+        let cast128 = ~U128::from(0, ~Self::denominator() * uint);
         Self {
-            value: ~Self::denominator() * uint,
+            value: cast128,
         }
     }
 }
