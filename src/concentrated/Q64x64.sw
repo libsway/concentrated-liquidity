@@ -1,6 +1,5 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
-
-library fixed_num;
+library Q64x64;
 
 use core::num::*;
 use std::{

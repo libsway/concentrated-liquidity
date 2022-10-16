@@ -68,8 +68,8 @@ impl I24 {
     }
 
     
-    pub fn abs(self) -> Self {
-        if self.underlying >= ~Self::indent() {
+    pub fn abs(self) -> u32 {
+        if self.underlying > ~Self::indent() || self.underlying == ~Self::indent(){
             return self;
         } else {
             let abs_self: u32 = ~Self::indent() + (~Self::indent() - self.underlying);
