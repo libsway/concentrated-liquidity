@@ -49,11 +49,11 @@ impl I24 {
 
     // Return the underlying value
     pub fn into(self) -> u32 {
-        number.underlying
+        self.underlying
     }
 
     pub fn flip(self) -> u32 {
-        ~self::indent() - self.underlying
+        ~Self::indent() - self.underlying
     }
 }
 
@@ -66,7 +66,7 @@ impl I24 {
     }
 
     
-    pub fn abs() -> Self {
+    pub fn abs(self) -> Self {
         if self.underlying >= ~Self::indent() {
             return self;
         } else {
