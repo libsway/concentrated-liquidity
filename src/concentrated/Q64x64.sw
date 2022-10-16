@@ -1,11 +1,13 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 
+library fixed_num;
+
 use core::num::*;
 use std::{
     u128::U128,
     u256::U256,
     assert::assert,
-    math::*.
+    math::*,
     revert::revert,
 };
 
@@ -19,7 +21,7 @@ impl Q64x64 {
     }
 
     pub fn zero() -> Self {
-        value: U128::from(0),
+        Self { value: U128::from(0) }
     }
 
     pub fn bits() -> u32 {
