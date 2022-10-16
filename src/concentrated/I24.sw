@@ -66,7 +66,7 @@ impl I24 {
     }
 
     pub fn abs(self) -> u32 {
-        abs: u32 = if self.gt(I24::new()) { I24::into(self) } else {underlying: ~Self::indent() - value}
+        abs = if self.gt(I24::new()) { I24::into(self) } else {underlying: ~Self::indent() - value}
     }
 
     /// The smallest value that can be represented by this integer type.
