@@ -4,7 +4,10 @@ dep I24;
 dep Q64x64;
 
 use I24::I24;
-use I24::neg_from;
+use I24::{
+    neg_from
+};
+
 use std::{
     u128::*,
     result::Result,
@@ -26,6 +29,7 @@ const MIN_SQRT = Q64x64 {
 const MAX_SQRT = Q64x64 {
     value: ~Q64x64::from(get_price_at_tick(MAX_TICK))
 };
+
 
 pub fn get_price_at_tick(tick: I24) -> u32 {
     let absTick = ~I24::into(tick.abs());

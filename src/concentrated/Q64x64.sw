@@ -151,7 +151,7 @@ impl Exponentiate for Q64x64 {
             revert(0);
         }
         Self {
-            value: nominator.lower,
+            value: ~U128::from(0, nominator.lower),
         }
     }
 }
