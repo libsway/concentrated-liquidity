@@ -28,7 +28,7 @@ const MAX_SQRT = Q64x64 {
 };
 
 pub fn get_price_at_tick(tick: I24) -> u32 {
-    let absTick: u32 = tick.abs();
+    let absTick = ~I24::into(tick.abs());
     return absTick;
 }
 
