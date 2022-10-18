@@ -187,15 +187,11 @@ pub fn get_price_at_tick(tick: I24) -> U128 {
         ~U256::from(0,0,0,1)
     };
     let price: U256 = (ratio >> 128) + round_up;
-    return price.as_u128().value;
+    return price.as_u128().unwrap();
 }
 
-fn get_tick_at_price(price: U128) -> I24 {
+fn get_tick_at_price(sqrtprice: Q64X64) -> I24 {
     // need to validate ratio
     // if (sqrtPriceX96 < MIN_SQRT_RATIO || sqrtPriceX96 >= MAX_SQRT_RATIO) revert PriceOutOfBounds();
-    
-    let ratio = ~U256::from(0, 0, price.upper, price.lower) << 128;
-    let f = if r > U256::from(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
-    msb = msb || f;
-    r = f >> r;
+    let price = sqrtprice * sqrtprice;
 }
