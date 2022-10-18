@@ -26,9 +26,9 @@ fn get_dx(
     price_upper: u64,
     price_lower: u64,
     round_up: bool,
-) -> u64 {
+) -> U128 {
     let PRECISION_BITS: u64 = 64;
-    let mut dx: u64 = 0;
+    let mut dx: U128 = 0;
     if round_up {
         dx = mul_div_rounding_up_u256(~U256::from(0, 0,liquidity.upper, liquidity.lower) << PRECISION_BITS, price_upper - price_lower, price_upper);
         if dx % price_lower == 0 {

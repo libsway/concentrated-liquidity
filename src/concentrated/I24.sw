@@ -1,6 +1,7 @@
 library I24;
 use core::num::*;
 use std::assert::assert;
+
 /// The 24-bit signed integer type.
 /// Represented as an underlying u32 value.
 /// Actual value is underlying value minus 2 ^ 24
@@ -8,21 +9,25 @@ use std::assert::assert;
 pub struct I24 {
     underlying: u32,
 }
+
 pub trait From {
     /// Function for creating I24 from u32
     fn from(underlying: u32) -> Self;
 }
+
 impl From for I24 {
     /// Helper function to get a signed number from with an underlying
     fn from(underlying: u32) -> Self {
         Self { underlying }
     }
 }
+
 impl core::ops::Eq for I24 {
     fn eq(self, other: Self) -> bool {
         self.underlying == other.underlying
     }
 }
+
 impl core::ops::Ord for I24 {
     fn gt(self, other: Self) -> bool {
         self.underlying > other.underlying
@@ -32,14 +37,13 @@ impl core::ops::Ord for I24 {
     }
 }
 
-// impl core::ops::OrdEq for I24 {
-// }
 impl I24 {
     /// The underlying value that corresponds to zero signed value
     pub fn indent() -> u32 {
         2147483648u32
     }
 }
+
 impl I24 {
     // Return the underlying value
     pub fn into(self) -> u32 {
@@ -49,6 +53,7 @@ impl I24 {
         ~Self::indent() - self.underlying
     }
 }
+
 impl I24 {
     /// Initializes a new, zeroed I24.
     pub fn new() -> Self {
@@ -95,6 +100,7 @@ impl I24 {
         Self { underlying }
     }
 }
+
 impl core::ops::Add for I24 {
     /// Add a I24 to a I24. Panics on overflow.
     fn add(self, other: Self) -> Self {
@@ -102,6 +108,7 @@ impl core::ops::Add for I24 {
         ~Self::from(self.underlying - ~Self::indent() + other.underlying)
     }
 }
+
 impl core::ops::Subtract for I24 {
     /// Subtract a I24 from a I24. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
@@ -116,6 +123,7 @@ impl core::ops::Subtract for I24 {
         res
     }
 }
+
 impl core::ops::Multiply for I24 {
     /// Multiply a I24 with a I24. Panics of overflow.
     fn multiply(self, other: Self) -> Self {
@@ -140,6 +148,7 @@ impl core::ops::Multiply for I24 {
         res
     }
 }
+
 impl core::ops::Divide for I24 {
     /// Divide a I24 by a I24. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {

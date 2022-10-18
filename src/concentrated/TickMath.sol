@@ -47,7 +47,6 @@ library TickMath {
             if (absTick & 0x20000 != 0) ratio = (ratio * 0x5d6af8dedb81196699c329225ee604) >> 128;
             if (absTick & 0x40000 != 0) ratio = (ratio * 0x2216e584f5fa1ea926041bedfe98) >> 128;
             if (absTick & 0x80000 != 0) ratio = (ratio * 0x48a170391f7dc42444e8fa2) >> 128;
-
             if (tick > 0) ratio = type(uint256).max / ratio;
             // This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96.
             // We then downcast because we know the result always fits within 160 bits due to our tick input constraint.
