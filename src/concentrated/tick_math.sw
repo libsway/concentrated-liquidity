@@ -9,6 +9,7 @@ use std::{
     u128::*,
     u256::*,
     result::Result,
+    math::*, 
 };
 // use Q64x64::Q64x64;
 
@@ -25,7 +26,11 @@ use std::{
 // const MAX_SQRT = Q64x64 {
 //     value: ~Q64x64::from(get_price_at_tick(MAX_TICK))
 // };
- 
+impl U256 {
+    fn modulo(self, other: U256) -> U256 {
+        return (self - other * (self / other));
+    }
+}
 
 pub fn get_price_at_tick(tick: I24) -> U128 {
     let zero: U256 = ~U256::from(0,0,0,0);
@@ -174,7 +179,7 @@ pub fn get_price_at_tick(tick: I24) -> U128 {
         };
     if (tick > ~I24::from_uint(0)) {
         let ratio = ~U256::max() / ratio;
-    }     
+    }
     // shr 128 to downcast to a U128
     let round_up: U256 = if (ratio % (1 << 128) == 0) {
         ~U256::from(0,0,0,0)
