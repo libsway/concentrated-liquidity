@@ -10,6 +10,8 @@ use std::{
     u256::*
 };
 
+use Q128x128::Q128x128;
+
 pub struct Q64x64 {
     value: U128,
 }
@@ -78,12 +80,12 @@ impl core::ops::Subtract for Q64x64 {
         }
     }
 }
-impl core::ops::Multiply for Q64x64 {
+impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
     fn multiply(self, other: Self) -> Q128x128 {
         let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
         let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
-        Self {
+        Q128x128 {
             value: ~Q128x128::from(int_u128, dec_u128)
         }
     }
