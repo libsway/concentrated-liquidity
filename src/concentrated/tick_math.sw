@@ -193,5 +193,9 @@ pub fn get_price_at_tick(tick: I24) -> U128 {
 fn get_tick_at_price(sqrtprice: Q64X64) -> I24 {
     // need to validate ratio
     // if (sqrtPriceX96 < MIN_SQRT_RATIO || sqrtPriceX96 >= MAX_SQRT_RATIO) revert PriceOutOfBounds();
-    let price = sqrtprice * sqrtprice;
+    let price: Q128X128 = sqrtprice * sqrtprice;
+    let tick_base = ~Q128X128::from_uint(10001 << (128 - 4));
+    // handle negative values
+    let log_base_tick_base_of_price = price.binary_log() / tick_base.binary_log();
+    // return as I24
 }

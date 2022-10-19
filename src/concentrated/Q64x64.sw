@@ -59,17 +59,11 @@ impl core::ops::Subtract for Q64x64 {
 }
 impl core::ops::Multiply for Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
-    fn multiply(self, other: Self) -> Q128x64 {
-        let self_u256 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-        let other_u256 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-        let self_multiply_other = self_u256 * other_u256;
-        let res_u256 = self_multiply_other >> 64;
-        if res_u256.b != 0 {
-            // panic on overflow
-            revert(0);
-        }
+    fn multiply(self, other: Self) -> Q128x128 {
+        let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
+        let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
         Self {
-            value: ~U128::from(res_u256.c, res_u256.d),
+            value: ~Q128x128::from(int_u128, dec_u128)
         }
     }
 }
