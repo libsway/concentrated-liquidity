@@ -89,16 +89,58 @@ storage {
     reserve1: u64 = 0,
 
     price: Q64x64 = ~Q64x64::from_uint; // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    neatest_tick: I24 = ~I24::from_uint(0); 
+    nearest_tick: I24 = ~I24::from_uint(0); 
 
     unlocked: bool = false,
 
     ticks: StorageMap<I24, Tick> = (),
-    positions: StorageMap<Identity, StorageMap<I24, Position>> = (),
+    positions: StorageMap<Identity, StorageMap<I24, StorageMap<I24, Position>>> = (),
 }
 
 impl ConcentratedLiquidityPool for contract {
+    #[storage(read, write)]
+    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128 {
+        _ensure_tick_spacing(upper, lower).unwrap();
+
+        let price_lower = get_price_at_tick(lower);
+        let price_upper = get_price_at_tick(upper);
+        let current_price = storage.price;
+
+        let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, amount1_desired, amount0_desired);
+
+        // check to avoid overflow
+
+        // update seconds per liquidity
+    }
+}
+
+fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), TridentErrors> {
+    if lower % I24::from_uint(tick_spacing) != 0 {
+        return TridentErrors::InvalidTick;
+    }
+    if (lower / I24::from_uint(tick_spacing)) % 2 != 0 {
+        return TridentErrors::LowerEven;
+    }
+    if upper % I24::from_uint(tick_spacing) != 0 {
+        return TridentErrors::InvalidTick;
+    }
+    if (upper / I24::from_uint(tick_spacing)) % 2 == 0 {
+        return TridentErrors::UpperOdd;
+    }
+
+    Ok(())
+}
+
+fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128, add_or_remove: bool) -> (u64, u64) {
+    let position = storage.positions.get(owner).get(lower).get(upper);
+
 
 }
 
+fn range_fee_growth(lower_tick : I24, upper_tick: I24) -> (u64, u64) {
+    let current_tick = storage.nearest_tick;
 
+    let lower: Tick = storage.ticks.get(lower_tick);
+    let upper: Ticker = storage.ticks.get(upper_tick);
+
+}

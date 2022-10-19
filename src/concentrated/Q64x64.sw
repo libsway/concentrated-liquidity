@@ -1,7 +1,16 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q64x64;
 use core::num::*;
-use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
+use std::{
+    assert::assert, 
+    math::*, 
+    revert::revert, 
+    u128::*, 
+    u256::*
+};
+
+use Q128x128::Q128x128;
+
 pub struct Q64x64 {
     value: U128,
 }
@@ -26,6 +35,14 @@ impl Q64x64 {
     }
     pub fn bits() -> u32 {
         128
+    }
+}
+impl U128 {
+    fn ge(self, other: Self) -> bool {
+        self > other || self == other
+    }
+    fn le(self, other: Self) -> bool {
+        self < other || self == other
     }
 }
 impl core::ops::Eq for Q64x64 {
@@ -53,19 +70,19 @@ impl core::ops::Subtract for Q64x64 {
     /// Subtract a Q64x64 from a Q64x64. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value > other.value || self.value == other.value);
+        assert(self.value >= other.value);
         Self {
             value: self.value - other.value,
         }
     }
 }
-impl core::ops::Multiply for Q64x64 {
+impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
     fn multiply(self, other: Self) -> Q128x128 {
         let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
         let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
-        Self {
-            value: ~Q128x128::from(int_u128, dec_u128),
+        Q128x128 {
+            value: ~Q128x128::from(int_u128, dec_u128)
         }
     }
 }
