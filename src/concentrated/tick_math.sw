@@ -26,7 +26,7 @@ use std::{
 // const MAX_SQRT = Q64x64 {
 //     value: ~Q64x64::from(get_price_at_tick(MAX_TICK))
 // };
-impl U256 {
+impl core::ops::Mod for U256 {
     fn modulo(self, other: U256) -> U256 {
         return (self - other * (self / other));
     }
