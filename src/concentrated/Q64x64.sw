@@ -39,6 +39,14 @@ impl Q64x64 {
         128
     }
 }
+impl U128 {
+    fn ge(self, other: Self) -> bool {
+        self > other || self == other
+    }
+    fn le(self, other: Self) -> bool {
+        self < other || self == other
+    }
+}
 impl core::ops::Eq for Q64x64 {
     fn eq(self, other: Self) -> bool {
         self.value == other.value
@@ -64,7 +72,7 @@ impl core::ops::Subtract for Q64x64 {
     /// Subtract a Q64x64 from a Q64x64. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value > other.value || self.value == other.value);
+        assert(self.value >= other.value);
         Self {
             value: self.value - other.value,
         }
@@ -106,6 +114,7 @@ impl core::ops::Divide for Q64x64 {
         }
     }
 }
+
 
 impl core::ops::Mod for U128 {
     /// Modulo of a U128 by a U128. Panics if divisor is zero.
