@@ -134,13 +134,41 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), TridentErrors> {
 fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128, add_or_remove: bool) -> (u64, u64) {
     let position = storage.positions.get(owner).get(lower).get(upper);
 
-
+    let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 }
 
 fn range_fee_growth(lower_tick : I24, upper_tick: I24) -> (u64, u64) {
     let current_tick = storage.nearest_tick;
 
     let lower: Tick = storage.ticks.get(lower_tick);
-    let upper: Ticker = storage.ticks.get(upper_tick);
+    let upper: Tick = storage.ticks.get(upper_tick);
 
+    let _fee_growth_global0 = storage.fee_growth_global0;
+    let _fee_growth_global1 = storage.fee_growth_global1;
+
+    let fee_growth_below0:u64 = 0;
+    let fee_growth_below1:u64 = 0;
+    let fee_growth_above0:u64 = 0;
+    let fee_growth_above1:u64 = 0;
+
+    if lower_tick < current_tick || lower_tick == current_tick {
+        fee_growth_below0 = lower.fee_growth_outside0;
+        fee_growth_below1 = lower.fee_growth_outside1;
+    } else {
+        fee_growth_below0 = _fee_growth_global0 - lower.fee_growth_outside0;
+        fee_growth_below1 = _fee_growth_global1 - lower.fee_growth_outside1;
+    }
+
+    if (current_tick < upper_tick) {
+        fee_growth_above0 = upper.fee_growth_outside0;
+        fee_growth_above1 = upper.fee_growth_outside1;
+    } else {
+        fee_growth_above0 = _fee_growth_global0 - upper.fee_growth_outside0;
+        fee_growth_above1 = _fee_growth_global1 - upper.fee_growth_outside1;
+    }
+
+    let fee_growth_inside0 = _fee_growth_global0 - fee_growth_below0 - fee_growth_above0;
+    let fee_growth_inside1 = _fee_growth_global1 - fee_growth_below1 - fee_growth_above1;
+
+    (fee_growth_inside0, fee_growth_inside1)
 }
