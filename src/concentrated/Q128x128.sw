@@ -9,11 +9,9 @@ use std::{
     U256::*, 
     u256::*
 };
-
 pub struct Q128x128 {
     value: U256,
 }
-
 pub struct msb_tuple {
     sig_bits: u64,
     most_sig_bit: u8
@@ -62,46 +60,6 @@ impl core::ops::Subtract for Q128x128 {
         }
     }
 }
-// impl core::ops::Multiply for Q128x128 {
-//     /// Multiply a Q128x128 with a Q128x128. Panics of overflow.
-//     fn multiply(self, other: Self) -> Q128x64 {
-//         let self_u256 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-//         let other_u256 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-//         let self_multiply_other = self_u256 * other_u256;
-//         let res_u256 = self_multiply_other >> 64;
-//         if res_u256.b != 0 {
-//             // panic on overflow
-//             revert(0);
-//         }
-//         Self {
-//             value: ~U256::from(res_u256.c, res_u256.d),
-//         }
-//     }
-// }
-// impl core::ops::Divide for Q128x128 {
-//     /// Divide a Q128x128 by a Q128x128. Panics if divisor is zero.
-//     fn divide(self, divisor: Self) -> Self {
-//         let zero = ~Q128x128::zero();
-//         assert(divisor != zero);
-//         let denominator = ~U256::from(0, ~Self::denominator());
-//         // Conversion to U256 done to ensure no overflow happen
-//         // and maximal precision is avaliable
-//         // as it makes possible to multiply by the denominator in 
-//         // all cases
-//         let self_U256 = ~U256::from(0, self.value);
-//         let divisor_U256 = ~U256::from(0, divisor.value);
-
-//         // Multiply by denominator to ensure accuracy 
-//         let res_U256 = self_U256 * denominator / divisor_U256;
-//         if res_U256.upper != 0 {
-//             // panic on overflow
-//             revert(0);
-//         }
-//         Self {
-//             value: res_U256.lower,
-//         }
-//     }
-// }
 impl Q128x128 {
     /// Creates Q128x128 that correponds to a multplied Q64x64
     pub fn from(int: U128, dec: U128) -> Self {
@@ -120,24 +78,33 @@ impl Q128x128 {
     }
 
     // Returns the log base 2 value
-    pub fn binary_log(self) -> Self {
+    pub fn binary_log(self) -> I24 {
+        // find the most significant bit
         let msb_idx = most_sig_bit_idx(self.value);
+
+        // find the 64 most significant bits
         let sig_bits = most_sig_bits(msb_idx);
+
+        // take the log base 2 of sig_bits
         asm(output: log_sig_bits, r1: sig_bits, r2: 2) {
             mlog output, r1, r2;
         }
+
+        // reinsert log bits into Q128X128
         let log_base2_u256 = insert_log_bits(self.value, msb_idx, log_sig_bits);
+
+        // log2(10^128) + 8*log2(10^16)
         asm(output: log_base2_max_u64, r1: 10**16, r2: 2) {
             mlog output, r1, r2;
         }
-        // 16*8 = 128
-        let log_base2_1_q128x128 = ~U256::from(0, 0, 0, log_base2_max_u64 * 8);
-        // log2(price) = log2(price*10^128) - log2(10^128)
-        // zero normalizes log base 2
-        // handle negative values with I24
-        let log_base2_q128x128 = log_base2_u256 - log_base2_1_q128x128
 
-        log_base2_q128x128
+        // log2(10^128) = 8 * log2(10^16)
+        let log_base2_1_q128x128 = ~U256::from(0, 0, 0, log_base2_max_u64 * 8);
+
+        // log2(price) = log2(price*10^128) - log2(10^128)
+        let log_base2_value = ~I24::from_uint(log_base2_u256.as_u32()) - ~I24::from_uint(log_base2_1_q128x128.as_u32());
+
+        log_base2_value
     }
 
     fn most_sig_bit_idx(value: U256) -> u8 {

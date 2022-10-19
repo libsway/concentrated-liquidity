@@ -1,31 +1,20 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q64x64;
-
 use core::num::*;
-use std::{
-    assert::assert, 
-    math::*, 
-    revert::revert, 
-    u128::*, 
-    u256::*
-};
-
+use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 pub struct Q64x64 {
     value: U128,
 }
-
 impl Q64x64 {
     pub fn u128(self) -> U128 {
         self.value
     }
 }
-
 impl Q64x64 {
-    pub fn from(value : U128) -> Self {
+    pub fn from(value: U128) -> Self {
         Self { value }
     }
 }
-
 impl Q64x64 {
     pub fn denominator() -> u64 {
         1 << 64
@@ -76,7 +65,7 @@ impl core::ops::Multiply for Q64x64 {
         let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
         let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
         Self {
-            value: ~Q128x128::from(int_u128, dec_u128)
+            value: ~Q128x128::from(int_u128, dec_u128),
         }
     }
 }
@@ -100,21 +89,17 @@ impl core::ops::Divide for Q64x64 {
             revert(0);
         }
         let res_u128 = ~U128::from(res_u256.c, res_u256.d);
-
         Self {
             value: res_u128,
         }
     }
 }
-
 impl core::ops::Mod for U128 {
     /// Modulo of a U128 by a U128. Panics if divisor is zero.
     fn modulo(self, divisor: Self) -> Self {
         let zero = ~U128::from(0, 0);
         let one = ~U128::from(0, 1);
-
         assert(divisor != zero);
-
         let mut quotient = ~U128::new();
         let mut remainder = ~U128::new();
         let mut i = 128 - 1;
@@ -127,24 +112,19 @@ impl core::ops::Mod for U128 {
                 remainder -= divisor;
                 quotient = quotient | one;
             }
-
             if i == 0 {
                 break;
             }
-
             i -= 1;
         }
-
         remainder
     }
 }
-
 impl U128 {
     pub fn sqrt(self) -> Self {
         let z = ~U128::from(0, 181);
         let x = self;
         let y = self;
-
         if y < ~U128::from(0x100, 0x0000000000000000) {
             y >> 64;
             z << 32;
@@ -157,9 +137,7 @@ impl U128 {
             y >> 16;
             z << 8;
         }
-
         let z = (z * (y + ~U128::from(0, 65536))) >> 18;
-
         let z = (z + (x / z)) >> 1;
         let z = (z + (x / z)) >> 1;
         let z = (z + (x / z)) >> 1;
@@ -167,15 +145,12 @@ impl U128 {
         let z = (z + (x / z)) >> 1;
         let z = (z + (x / z)) >> 1;
         let mut z = (z + (x / z)) >> 1;
-
-        if ( x/ z ) < z {
+        if (x / z) < z {
             z = x / z;
         }
-
         z
     }
 }
-
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
@@ -197,7 +172,6 @@ impl Root for Q64x64 {
         }
     }
 }
-
 impl Exponent for Q64x64 {
     /// Exponent function. e ^ x
     fn exp(exponent: Self) -> Self {
