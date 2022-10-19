@@ -25,6 +25,7 @@ fn get_dy(
     }
     dy
 }
+
 fn get_dx(
     liquidity: U128,
     price_upper: Q64x64,
@@ -35,7 +36,7 @@ fn get_dx(
     let mut dx: U128 = ~U128::from(0, 0);
     if round_up {
         dx = mul_div_rounding_up_u256(~U256::from(0, 0,liquidity.upper, liquidity.lower) << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128());
-        if dx % price_lower == ~U128::from(0, 0) {
+        if dx % price_lower.u128() == ~U128::from(0, 0) {
             dx = dx / price_lower.u128();
         } else {
             dx = (dx / price_lower.u128()) + ~U128::from(0, 1);
