@@ -52,7 +52,7 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 //TODO: do we need read permission?
 #[storage(read, write)]
 fn tick_cross(
-    ticks_map: StorageMap<I24, Tick>,
+    ref mut ticks_map: StorageMap<I24, Tick>,
     ref mut next_tick: I24, 
     fee_growth_time: U256, ref mut liquidity: U128, 
     seconds_growth_global: U256, fee_growth_globalA: U256,
@@ -119,7 +119,7 @@ fn tick_cross(
 
 #[storage(read, write)]
 fn tick_insert(
-    ticks: StorageMap<I24, Tick>,
+    ref mut ticks: StorageMap<I24, Tick>,
     fee_growth_global0: U256, fee_growth_global1: U256,  
     seconds_growth_global: U256, current_price: U256,
     amount: U128,  nearest: I24
