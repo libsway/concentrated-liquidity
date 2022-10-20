@@ -63,9 +63,10 @@ impl I24 {
     }
     pub fn abs(self) -> u32 {
         let is_gt_zero: bool = (self.underlying > ~Self::indent()) || (self.underlying == ~Self::indent());
+        let abs_pos = self.underlying - ~Self::indent();
         let abs_neg = ~Self::indent() + (~Self::indent() - self.underlying);
         let abs_value = if is_gt_zero {
-            self.underlying
+            abs_pos
         } else {
             abs_neg
         };
