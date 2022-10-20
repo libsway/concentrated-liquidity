@@ -1,6 +1,8 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
+dep I24;
+
 use core::num::*;
 use std::{
     assert::assert, 
@@ -9,6 +11,9 @@ use std::{
     U256::*, 
     u256::*
 };
+
+use I24::*;
+
 pub struct Q128x128 {
     value: U256,
 }
@@ -87,15 +92,18 @@ impl Q128x128 {
 
         // take the log base 2 of sig_bits
         asm(output: log_sig_bits, r1: sig_bits, r2: 2) {
-            mlog output, r1, r2;
+            mlog output r1 r2;
+            output: u64
         }
 
         // reinsert log bits into Q128X128
         let log_base2_u256 = insert_log_bits(self.value, msb_idx, log_sig_bits);
 
         // log2(10^128) + 8*log2(10^16)
-        asm(output: log_base2_max_u64, r1: 10**16, r2: 2) {
-            mlog output, r1, r2;
+        let ten_to_the_16th:u64 = 10000000000000000;
+        asm(output: log_base2_max_u64, r1: ten_to_the_16th, r2: 2) {
+            mlog output r1 r2;
+            output: u64
         }
 
         // log2(10^128) = 8 * log2(10^16)
@@ -115,8 +123,8 @@ impl Q128x128 {
         while vector_idx < v.len() {
             let mut bit_idx = 63;
             while(bit_idx > 0){
-                bit_compare = 1 << bit_idx;
-                if(v.get(vector_idx) > bit_compare || v.get(vector_idx) == bit_compare){
+                let bit_compare = 1 << bit_idx;
+                if(v.get(vector_idx).unwrap() > bit_compare || v.get(vector_idx).unwrap() == bit_compare){
                     return 64 * (v.len() - vector_idx) + (bit_idx)
                 }
                 bit_idx -= 1;
@@ -140,7 +148,7 @@ impl Q128x128 {
             let mut bit_idx = if vector_idx == start_vector_idx { msb_idx % 64 } else { 63 };
             while( bit_idx > 0 ) {
                 bit_compare = 1 << (bit_idx);
-                xor_flag: bool = (v.get(vector_idx) ^ bit_compare) < v.get(vector_idx);
+                let xor_flag: bool = (v.get(vector_idx) ^ bit_compare) < v.get(vector_idx);
                 let result_add = if(xor_flag) { 1 << result_idx } else { 0 };
                 result += result_add; result_idx -= 1; bit_idx -= 1;
                 if(result_idx < 0 ) {
@@ -151,7 +159,7 @@ impl Q128x128 {
         }
     }
 
-    fn insert_sig_bits(ref mut val, msb_idx: u8, log_sig_bits: u64) -> U256 {
+    fn insert_sig_bits(ref mut val: u64, msb_idx: u8, log_sig_bits: u64) -> U256 {
         // intiialize vector
         let mut v = ~Vec::new();
         v.push(~u64::zero()); v.push(~u64::zero()); v.push(~u64::zero()); v.push(~u64::zero());
@@ -220,12 +228,12 @@ impl Exponent for Q128x128 {
         let one = ~Q128x128::from_uint(1);
 
         //coefficients in the Taylor series up to the seventh power
-        let p2 = ~Q128x128::from(2147483648); // p2 == 1 / 2!
-        let p3 = ~Q128x128::from(715827882); // p3 == 1 / 3!
-        let p4 = ~Q128x128::from(178956970); // p4 == 1 / 4!
-        let p5 = ~Q128x128::from(35791394); // p5 == 1 / 5!
-        let p6 = ~Q128x128::from(5965232); // p6 == 1 / 6!
-        let p7 = ~Q128x128::from(852176); // p7 == 1 / 7!
+        let p2 = ~Q128x128::from(0, 2147483648); // p2 == 1 / 2!
+        let p3 = ~Q128x128::from(0, 715827882); // p3 == 1 / 3!
+        let p4 = ~Q128x128::from(0, 178956970); // p4 == 1 / 4!
+        let p5 = ~Q128x128::from(0, 35791394); // p5 == 1 / 5!
+        let p6 = ~Q128x128::from(0, 5965232); // p6 == 1 / 6!
+        let p7 = ~Q128x128::from(0, 852176); // p7 == 1 / 7!
         // common technique to counter loosing sugnifucant numbers in usual approximation
         // Taylor series approximation of exponantiation function minus 1. The subtraction is done to deal with accuracy issues
         let res_minus_1 = exponent + exponent * exponent * (p2 + exponent * (p3 + exponent * (p4 + exponent * (p5 + exponent * (p6 + exponent * p7)))));
