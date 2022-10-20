@@ -10,6 +10,8 @@ use std::{
     identity::Identity,
     u128::U128,
     storage::StorageMap,
+    token::transfer,
+    auth::msg_sender,
 };
 
 use cl_libs::I24::I24;
@@ -87,7 +89,7 @@ storage {
     tick_spacing: u32 = 10, // implicitly a u24
     swap_fee: u32 = 2500,
     
-    bar_fee_too: Identity = ~ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
+    bar_fee_to: Identity = ~ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
 
     liquidity: U128 = 0,
 
@@ -131,6 +133,54 @@ impl ConcentratedLiquidityPool for Contract {
 
         // update seconds per liquidity
     }
+
+    
+    #[storage(read, write)]
+    fn collect_protocol_fee() -> (u64, u64) {
+        if storage.token0_protocol_fee > 1 {
+            let amount0: u64 = storage.token0_protocol_fee;
+            storage.token0_protocol_fee = 0;
+            storage.reserve0 -= amount0;
+            transfer(storage.token0, amount0, storage.bar_fee_to)
+        }
+        if storage.token1_protocol_fee > 1 {
+            let amount1: u64 = storage.token0_protocol_fee;
+            storage.token1_protocol_fee = 0;
+            storage.reserve1 -= amount1;
+            transfer(storage.token1, amount1, storage.bar_fee_to)
+
+        }
+    }
+
+    #[storage(read, write)]
+    fn collect(tickLower: I24, tickUpper: I24) -> (u64, u64) {
+        let (amount0_fees, amount1_fees) = _update_position(msg.sender, lower, upper, 0);
+
+        storage.reserve0 -= amount0_fees;
+        storage.reserve1 -= amount1_fees;
+
+        let sender: Result<Identity, AuthError> = msg_sender().unwrap();
+
+        transfer(storage.token0, amount0_fees, sender);
+        transfer(storage.token1, amount1_fees, sender);
+
+        (amount0_fees, amount1_fees)
+    }
+
+    #[storage(read)]
+    fn get_price_and_nearest_tick() -> (Q64X64, I24){
+        (storage.price, storage.nearest_tick)
+    }
+
+    #[storage(read)]
+    fn get_protocol_fees() -> (u64, u64){
+        (storage.token0_protocol_fee, storage.token1_protocol_fee)
+    }
+
+    #[storage(read)]
+    fn get_reserves() -> (u64, u64){
+        (storage.reserve0, storage.reserve1)
+    }
 }
 #[storage(read)]
 fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityErrors> {
@@ -155,34 +205,38 @@ fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128, add_
 
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 }
+
 #[storage(read,write)]
 fn swap(recipient: Address, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64X64) {
-    
+    ()
 }
+
 #[storage(read)]
 fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) {
-
+    ()
 }
+
 #[storage(read, write)]
 fn _update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
 
+    ()
 }
+
 #[storage(read, write)]
 fn _update_fees(token_zero_to_one: bool, fee_growth_global: Q64X64, protocol_fee: Q64X64) {
+    if token_zero_to_one {
+        storage.fee_growth_global1 = fee_growth_global;
+        storage.token1_protocol_fee += protocol_fee;
+    } else {
+        storage.fee_growth_global0 = fee_growth_global;
+        storage.token0_protocol_fee += protocol_fee;
+    }
 
+    ()
 }
-#[storage(read)]
-fn get_price_and_nearest_tick() -> (Q64X64, I24){
 
-}
-#[storage(read)]
-fn get_protocol_fees() -> (u64, u64){
-    
-}
-#[storage(read)]
-fn get_reserves() -> (u64, u64){
-    
-}
+
+
 #[storage(read)]
 fn range_fee_growth(lower_tick : I24, upper_tick: I24) -> (u64, u64) {
     let current_tick = storage.nearest_tick;
