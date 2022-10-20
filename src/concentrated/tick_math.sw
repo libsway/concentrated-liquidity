@@ -12,8 +12,6 @@ use std::{
     math::*, 
 };
 // use Q64x64::Q64x64;
-
-
 pub fn MAX_TICK() -> I24 {
     return ~I24::max()
 }

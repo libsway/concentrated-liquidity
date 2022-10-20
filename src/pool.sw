@@ -1,22 +1,21 @@
 contract;
 
-dep libs;
+dep cl_libs;
 
 use core::num::*;
-
 use std::{
     revert::require,
     identity::ContractId,
     token::transfer,
     identity::Identity,
-    U128::u128,
+    u128::U128,
     storage::StorageMap,
 };
 
-use concentrated_liquidity_libs::I24;
-use concentrated_liquidity_libs::Q64x64;
+use cl_libs::I24::I24;
+use cl_libs::Q64x64::*;
 
-pub enum TridentErrors {
+pub enum ConcentratedLiquidityErrors {
     Locked: (),
     ZeroAddress: (),
     InvalidToken: (),
@@ -59,6 +58,24 @@ abi ConcentratedLiquidityPool {
 
     #[storage(read, write)]
     fn burn(lower: I24, upper: I24, amount: u64) -> (u64, u64, u64, u64);
+
+    #[storage(read, write)]
+    fn swap(recipient: Address, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64X64) -> u64;
+
+    #[storage(read)]
+    fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64;
+
+    #[storage(read, write)]
+    fn collect_protocol_fee() -> (u64, u64);
+
+    #[storage(read)]
+    fn get_price_and_nearest_tick() -> (Q64X64, I24);
+
+    #[storage(read)]
+    fn get_protocol_fees() -> (u64, u64);
+
+    #[storage(read)]
+    fn get_reserves() -> (u64, u64);
 }
 
 // Should be all storage variables
@@ -70,11 +87,11 @@ storage {
     tick_spacing: u32 = 10, // implicitly a u24
     swap_fee: u32 = 2500,
     
-    bar_fee_too: Identity = ~Identity::ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
+    bar_fee_too: Identity = ~ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
 
-    liquidity: U128 = 0;
+    liquidity: U128 = 0,
 
-    seconds_growth_global: U128 = ~U128::from(0, 0);
+    seconds_growth_global: U128 = ~U128::from(0, 0),
     last_observation: u32 = 0,
 
     fee_growth_global0: u64 = 0,
@@ -88,16 +105,18 @@ storage {
     reserve0: u64 = 0,
     reserve1: u64 = 0,
 
-    price: Q64x64 = ~Q64x64::from_uint; // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    nearest_tick: I24 = ~I24::from_uint(0); 
+    // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
+    price: Q64x64 = ~Q64x64::from_uint(0), 
+    
+    nearest_tick: I24 = ~I24::from_uint(0),
 
     unlocked: bool = false,
 
     ticks: StorageMap<I24, Tick> = (),
-    positions: StorageMap<Identity, StorageMap<I24, StorageMap<I24, Position>>> = (),
+    positions: StorageMap<(Identity, I24, I24), Position> = (),
 }
 
-impl ConcentratedLiquidityPool for contract {
+impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128 {
         _ensure_tick_spacing(upper, lower).unwrap();
@@ -113,30 +132,58 @@ impl ConcentratedLiquidityPool for contract {
         // update seconds per liquidity
     }
 }
-
-fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), TridentErrors> {
+#[storage(read)]
+fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityErrors> {
     if lower % I24::from_uint(tick_spacing) != 0 {
-        return TridentErrors::InvalidTick;
+        return ConcentratedLiquidityErrors::InvalidTick;
     }
     if (lower / I24::from_uint(tick_spacing)) % 2 != 0 {
-        return TridentErrors::LowerEven;
+        return ConcentratedLiquidityErrors::LowerEven;
     }
     if upper % I24::from_uint(tick_spacing) != 0 {
-        return TridentErrors::InvalidTick;
+        return ConcentratedLiquidityErrors::InvalidTick;
     }
     if (upper / I24::from_uint(tick_spacing)) % 2 == 0 {
-        return TridentErrors::UpperOdd;
+        return ConcentratedLiquidityErrors::UpperOdd;
     }
-
     Ok(())
 }
 
+#[storage(read, write)]
 fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128, add_or_remove: bool) -> (u64, u64) {
-    let position = storage.positions.get(owner).get(lower).get(upper);
+    let position = storage.positions.get(owner, lower, upper);
 
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 }
+#[storage(read,write)]
+fn swap(recipient: Address, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64X64) {
+    
+}
+#[storage(read)]
+fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) {
 
+}
+#[storage(read, write)]
+fn _update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
+
+}
+#[storage(read, write)]
+fn _update_fees(token_zero_to_one: bool, fee_growth_global: Q64X64, protocol_fee: Q64X64) {
+
+}
+#[storage(read)]
+fn get_price_and_nearest_tick() -> (Q64X64, I24){
+
+}
+#[storage(read)]
+fn get_protocol_fees() -> (u64, u64){
+    
+}
+#[storage(read)]
+fn get_reserves() -> (u64, u64){
+    
+}
+#[storage(read)]
 fn range_fee_growth(lower_tick : I24, upper_tick: I24) -> (u64, u64) {
     let current_tick = storage.nearest_tick;
 
