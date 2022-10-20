@@ -171,35 +171,36 @@ fn tick_insert(
 
     above_tick = ticks.get(above);
 
-    if above_liquidity != 0 || above == ~tick_math::MAX() {
-        ticks.get(above).liquidity = above_liquidity
+    if above_tick.liquidity != 0 || above == ~tick_math::MAX() {
+        above_tick.liquidity += amount;
+        ticks.insert(above, above_tick);
     } else {
-        prev = ticks.get(prev_above);
+        prev_tick = ticks.get(prev_above);
         prev_next = prev.next_tick;
 
         // check above order
-        assert(prev.liquidity != 0);
+        assert(prev_tick.liquidity != 0);
         assert(prev_next > above);
         assert(prev_above < above);
 
         if above < nearest || above == nearest {
-            ticks.get(above) = Tick {
+            ticks.insert(above, Tick {
                 prev_above,
                 prev_next,
                 amount,
                 fee_growth_global0,
                 fee_growth_global1,
                 seconds_growth_global
-            }
+            });
         } else {
-            ticks.get(above) = Tick {
+            ticks.insert(above, Tick {
                 prev_abovem
                 prev_next,
                 amount,
                 0,
                 0,
                 0
-            }
+            });
         }
         prev.next_tick = above;
         ticks.get(prev_next).prev_tick = above;
@@ -215,9 +216,6 @@ fn tick_insert(
     } else if below_between {
         nearest = below;
     }
-
-
-    ticks.insert(above, above_tick);
 
     nearest
 }
