@@ -1,12 +1,15 @@
 library dydx_math;
+
 dep full_math;
 dep Q64x64;
+
 use full_math::*;
 use Q64x64::*;
 use std::u256::U256;
 use std::u128::*;
 
-// Obligatory note on liquidity
+
+// Obligatory note on liquidity
 // Note that dydx math is implicitly expecting a Q.
 fn get_dy(
     liquidity: U128,

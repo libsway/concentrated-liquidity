@@ -228,12 +228,12 @@ impl Exponent for Q128x128 {
         let one = ~Q128x128::from_uint(1);
 
         //coefficients in the Taylor series up to the seventh power
-        let p2 = ~Q128x128::from(2147483648); // p2 == 1 / 2!
-        let p3 = ~Q128x128::from(715827882); // p3 == 1 / 3!
-        let p4 = ~Q128x128::from(178956970); // p4 == 1 / 4!
-        let p5 = ~Q128x128::from(35791394); // p5 == 1 / 5!
-        let p6 = ~Q128x128::from(5965232); // p6 == 1 / 6!
-        let p7 = ~Q128x128::from(852176); // p7 == 1 / 7!
+        let p2 = ~Q128x128::from(0, 2147483648); // p2 == 1 / 2!
+        let p3 = ~Q128x128::from(0, 715827882); // p3 == 1 / 3!
+        let p4 = ~Q128x128::from(0, 178956970); // p4 == 1 / 4!
+        let p5 = ~Q128x128::from(0, 35791394); // p5 == 1 / 5!
+        let p6 = ~Q128x128::from(0, 5965232); // p6 == 1 / 6!
+        let p7 = ~Q128x128::from(0, 852176); // p7 == 1 / 7!
         // common technique to counter loosing sugnifucant numbers in usual approximation
         // Taylor series approximation of exponantiation function minus 1. The subtraction is done to deal with accuracy issues
         let res_minus_1 = exponent + exponent * exponent * (p2 + exponent * (p3 + exponent * (p4 + exponent * (p5 + exponent * (p6 + exponent * p7)))));

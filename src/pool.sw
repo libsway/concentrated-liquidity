@@ -165,6 +165,7 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read, write)]
     fn collect(tick_lower: I24, tick_upper: I24) -> (u64, u64) {
+        let sender: Identity= msg_sender().unwrap();
         let (amount0_fees, amount1_fees) = _update_position(sender, tick_lower, tick_upper, ~U128::from(0,0));
 
         storage.reserve0 -= amount0_fees;
