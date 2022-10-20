@@ -63,64 +63,63 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 //TODO: do we need read permission?
 #[storage(read, write)]
 fn tick_cross(
-    ref mut ticks_map: StorageMap<I24, Tick>,
-    ref mut next_tick: I24, 
+    ref mut ticks: StorageMap<I24, Tick>,
+    ref mut next: I24, 
     fee_growth_time: U256, ref mut liquidity: U128, 
     seconds_growth_global: U256, fee_growth_globalA: U256,
     fee_growth_globalB: U256, 
     tick_spacing: I24, spacing: I24,
     token_zero_to_one: bool
 ) -> (U128, I24) {
-    //get seconds_growth from next_tick in StorageMap
-    let stored_tick: Tick = ticks_map.get(next_tick);
-    let outside_growth: U128 = ticks_map.get(next_tick).seconds_growth_outside;
-
+    //get seconds_growth from next in StorageMap
+    let stored_tick    = ticks.get(next);
+    let outside_growth = ticks.get(next).seconds_growth_outside;
     //cast outside_growth into U256
-    let outside_cast256 = ~U256::from(0, outside_growth);
+    let seconds_growth_outside = ~U256::from(0, outside_growth);
 
-    //do the math, downcast to U128, store in ticks_map
-    let outside_math: U256 = outside_cast256 - seconds_growth_global;
+    //do the math, downcast to U128, store in ticks
+    let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
     let outside_downcast = ~U128::from(outside_math.c, outside_math.d);
     stored_tick.seconds_growth_outside = outside_downcast;
-    ticks_map.insert(next_tick, stored_tick);
+    ticks.insert(next, stored_tick);
 
     let modulo_re_to24 = ~I24::from(0, 2);
     let i24_zero = ~I24::from(0, 0);
 
     if token_zero_to_one {
-        if ((next_tick / tick_spacing) % modulo_re_to24) == i24_zero {
-            liquidity = liquidity - ticks_map.get(next_tick).liquidity;
+        if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
+            liquidity -= ticks.get(next).liquidity;
         } else{
-            liquidity = liquidity + ticks_map.get(next_tick).liquidity;
+            liquidity += ticks.get(next).liquidity;
         }
         //change fee growth values, push onto storagemap
-        let new_stored_tick: Tick = ticks_map.get(next_tick);
+        let new_stored_tick: Tick = ticks.get(next);
         new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside0;
         new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside1;
-        ticks_map.insert(next_tick, new_stored_tick);
+        ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
-        next_tick = ticks_map.get(next_tick).previous_tick;    
+        next = ticks.get(next).previous_tick;    
     }
     
     else{
-        if ((next_tick / tick_spacing) % modulo_re_to24) == i24_zero {
-            liquidity = liquidity + ticks_map.get(next_tick).liquidity;
+        if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
+            liquidity += ticks.get(next).liquidity;
         } else{
-            liquidity = liquidity - ticks_map.get(next_tick).liquidity;
+            liquidity -= ticks.get(next).liquidity;
         }
         
         //change fee growth values, push onto storagemap
-        let new_stored_tick: Tick = ticks_map.get(next_tick);
+        let new_stored_tick: Tick = ticks.get(next);
         new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside1;
         new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside0;
-        ticks_map.insert(next_tick, new_stored_tick);
+        ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
-        next_tick = ticks_map.get(next_tick).previous_tick;
+        next = ticks.get(next).previous_tick;
         
     }
-    (liquidity, next_tick)
+    (liquidity, next)
 }
 
 #[storage(read, write)]
