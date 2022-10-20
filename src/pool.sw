@@ -33,7 +33,7 @@ pub enum ConcentratedLiquidityErrors {
 }
 
 struct Tick {
-    previous_tick: I24,
+    prev_tick: I24,
     next_tick: I24,
     liquidity: U128,
     fee_growth_outside0: u64,
