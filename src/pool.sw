@@ -14,9 +14,10 @@ use std::{
     result::*,
     chain::auth::*,
 };
-
 use cl_libs::I24::*;
 use cl_libs::Q64x64::*;
+use cl_libs::dydx_math::*;
+use cl_libs::tick_math::*;
 
 pub enum ConcentratedLiquidityErrors {
     Locked: (),
@@ -213,7 +214,7 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 
 #[storage(read, write)]
 fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128) -> (u64, u64) {
-    let position = storage.positions.get(owner, lower, upper);
+    let position = storage.positions.get((owner, lower, upper));
 
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 

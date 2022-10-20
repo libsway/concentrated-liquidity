@@ -1,7 +1,7 @@
 library tick_math;
 
 dep I24;
-// dep Q64x64;
+dep Q64x64;
 
 use I24::*;
 
@@ -11,7 +11,8 @@ use std::{
     result::Result,
     math::*, 
 };
-// use Q64x64::Q64x64;
+use Q64x64::*;
+
 pub fn MAX_TICK() -> I24 {
     return ~I24::max()
 }
