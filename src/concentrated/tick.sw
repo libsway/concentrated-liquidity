@@ -1,5 +1,8 @@
 library ticks;
 
+dep I24;
+dep tick_math;
+
 use core::num::*;
 use core::ops::*;
 
@@ -36,7 +39,7 @@ fn empty_tick() -> Tick {
         liquidity: ~U128::from(0,0),
         fee_growth_outside0: 0,
         fee_growth_outside1: 0,
-        seconds_growth_outside: ~U128::from(0,0,0,0)
+        seconds_growth_outside: ~U128::from(0,0)
     }
 }
 
@@ -59,7 +62,7 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 
     //cast tick_spacing to U128
     let tick_spacing_u64: u64 = tick_spacing;
-    let tick_spacing_u128 = ~U128::from(0, tick_spacing_64);
+    let tick_spacing_u128 = ~U128::from(0, tick_spacing_u64);
 
     //liquidity math
     let double_tick_spacing = tick_spacing_u128 * ~U128::from(0,2);
@@ -74,8 +77,8 @@ fn tick_cross(
     ref mut ticks: StorageMap<I24, Tick>,
     ref mut next: I24, 
     fee_growth_time: U256, ref mut liquidity: U128, 
-    seconds_growth_global: U256, fee_growth_globalA: U256,
-    fee_growth_globalB: U256, 
+    seconds_growth_global: U256, fee_growth_globalA: U128,
+    fee_growth_globalB: U128, 
     tick_spacing: I24, spacing: I24,
     token_zero_to_one: bool
 ) -> (U128, I24) {
@@ -83,7 +86,7 @@ fn tick_cross(
     let mut stored_tick    = ticks.get(next);
     let outside_growth = ticks.get(next).seconds_growth_outside;
     //cast outside_growth into U256
-    let seconds_growth_outside = ~U256::from(0, outside_growth);
+    let seconds_growth_outside = ~U256::from(0,0,0,outside_growth);
 
     //do the math, downcast to U128, store in ticks
     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
@@ -91,8 +94,8 @@ fn tick_cross(
     stored_tick.seconds_growth_outside = outside_downcast;
     ticks.insert(next, stored_tick);
 
-    let modulo_re_to24 = ~I24::from(0, 2);
-    let i24_zero = ~I24::from(0, 0);
+    let modulo_re_to24 = ~I24::from_uint(2);
+    let i24_zero = ~I24::from_uint(0);
 
     if token_zero_to_one {
         if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
@@ -107,10 +110,10 @@ fn tick_cross(
         ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
-        next = ticks.get(next).previous_tick;    
+        next = ticks.get(next).prev_tick;    
     }
     
-    else{
+    else {
         if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
             liquidity += ticks.get(next).liquidity;
         } else{
@@ -118,13 +121,13 @@ fn tick_cross(
         }
         
         //change fee growth values, push onto storagemap
-        let new_stored_tick: Tick = ticks.get(next);
+        let mut new_stored_tick: Tick = ticks.get(next);
         new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside1;
         new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside0;
         ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
-        next = ticks.get(next).previous_tick;
+        next = ticks.get(next).prev_tick;
         
     }
     (liquidity, next)
@@ -134,19 +137,19 @@ fn tick_cross(
 fn tick_insert(
     ref mut ticks: StorageMap<I24, Tick>,
     fee_growth_global0: U256, fee_growth_global1: U256,  
-    seconds_growth_global: U256, current_price: U256,
+    seconds_growth_global: U128, current_price: U256,
     amount: U128,  ref mut nearest: I24,
     above: I24, below: I24, 
     prev_above: I24, prev_below: I24
 ) -> I24 {
     // check inputs
-    assert(below_tick < above_tick);
-    assert(below_tick > MIN_TICK() || below_tick == MIN_TICK());
-    assert(above_tick < MAX_TICK() || above_tick == MAX_TICK());
+    assert(below < above);
+    assert(below > MIN_TICK() || below == MIN_TICK());
+    assert(above < MAX_TICK() || above == MAX_TICK());
     
     let mut below_tick = ticks.get(below);
 
-    if below_tick.liquidity != 0 || below == MIN_TICK() {
+    if below_tick.liquidity != ~U128::from(0,0) || below == MIN_TICK() {
         // tick has already been initialized
         below_tick.liquidity += amount;
         ticks.insert(below, below_tick);
@@ -156,63 +159,63 @@ fn tick_insert(
         let prev_next = prev_tick.next_tick;
         
         // check below ordering
-        assert(prev_tick.liquidity != 0 || prev_below == ~tick_math::MIN_TICK());
+        assert(prev_tick.liquidity != ~U128::from(0,0) || prev_below == MIN_TICK());
         assert(prev_below < below && below < prev_above);
         
         if below < nearest || below == nearest {
             ticks.insert(below, Tick {
-                prev_below,
-                prev_next,
-                amount,
-                fee_growth_global0,
-                fee_growth_global1,
-                seconds_growth_global
+                prev_tick: prev_below,
+                next_tick: prev_next,
+                liquidity: amount,
+                fee_growth_outside0: fee_growth_global0,
+                fee_growth_outside1: fee_growth_global1,
+                seconds_growth_outside: seconds_growth_global
             });
         } else {
             ticks.insert(below, Tick {
-                prev_below,
-                prev_next,
-                amount,
+                prev_tick: prev_below,
+                next_tick: prev_next,
+                liquidity: amount,
                 fee_growth_outside0: 0,
                 fee_growth_outside1: 0,
-                seconds_growth_outside: ~U256::from(0,0,0,0)
+                seconds_growth_outside: ~U128::from(0,0)
             });
         }
         prev_tick.next_tick = below;
         ticks.insert(prev_next, prev_tick);
     }
 
-    above_tick = ticks.get(above);
+    let mut above_tick = ticks.get(above);
 
-    if above_tick.liquidity != 0 || above == MAX() {
+    if above_tick.liquidity != 0 || above == MAX_TICK() {
         above_tick.liquidity += amount;
         ticks.insert(above, above_tick);
     } else {
-        prev_tick = ticks.get(prev_above);
-        prev_next = prev.next_tick;
+        let mut prev_tick = ticks.get(prev_above);
+        let mut prev_next = prev_tick.next_tick;
 
         // check above order
-        assert(prev_tick.liquidity != 0);
+        assert(prev_tick.liquidity != ~U128::from(0,0));
         assert(prev_next > above);
         assert(prev_above < above);
 
         if above < nearest || above == nearest {
             ticks.insert(above, Tick {
-                prev_above,
-                prev_next,
-                amount,
-                fee_growth_global0,
-                fee_growth_global1,
-                seconds_growth_global
+                prev_tick: prev_above,
+                next_tick: prev_next,
+                liquidity: amount,
+                fee_growth_outside0: fee_growth_global0.d,
+                fee_growth_outside1: fee_growth_global1.d,
+                seconds_growth_outside: seconds_growth_global
             });
         } else {
             ticks.insert(above, Tick {
-                prev_above,
-                prev_next,
-                amount,
+                prev_tick: prev_above,
+                next_tick: prev_next,
+                liquidity: amount,
                 fee_growth_outside0: 0,
                 fee_growth_outside1: 0,
-                seconds_growth_outside: U256::from(0,0,0,0)
+                seconds_growth_outside: ~U128::from(0,0)
             });
         }
         prev_tick.next_tick = above;
@@ -227,9 +230,9 @@ fn tick_insert(
     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
     
-    if above_between {
+    if above_is_between {
         nearest = above;
-    } else if below_between {
+    } else if below_is_between {
         nearest = below;
     }
 
@@ -244,41 +247,48 @@ fn tick_remove(
     amount: U128
 ) -> I24 {
     let mut current_tick = ticks.get(below);
+    let mut prev = current_tick.prev_tick;
+    let mut next = current_tick.next_tick;
+    let mut prev_tick = ticks.get(prev);
+    let mut next_tick = ticks.get(next);
 
-    if lower != MIN_TICK() && current_tick.liquidity == amount {
+    if below != MIN_TICK() && current_tick.liquidity == amount {
         // clear below tick from storage
-        let mut prev_tick = ticks.get(current_tick.prev_tick);
-        let mut next_tick = ticks.get(current_tick.next_tick);
-
         prev_tick.next_tick = current_tick.next_tick;
         next_tick.prev_tick = current_tick.prev_tick;
 
-        if nearest == lower {
+        if nearest == below {
             nearest = current_tick.prev_tick;
         }
         
         ticks.insert(below, empty_tick());
+        ticks.insert(prev, prev_tick);
+        ticks.insert(next, next_tick);
 
     } else {
         current_tick.liquidity += amount;
         ticks.insert(below, current_tick);
     }
 
-    let mut current_tick = ticks.get(above);
+    current_tick = ticks.get(above);
+    prev = current_tick.prev_tick;
+    next = current_tick.next_tick;
+    prev_tick = ticks.get(prev);
+    next_tick = ticks.get(next);
 
     if above != MAX_TICK() && current_tick.liquidity == amount {
         // clear above tick from storage
-        let mut prev_tick = ticks.get(current_tick).prev_tick;
-        let mut next_tick = ticks.get(current_tick).next_tick;
-
-        prev_tick.next_tick = current.next_tick;
-        next_tick.prev_tick = current.prev_tick;
+        prev_tick.next_tick = next;
+        next_tick.prev_tick = prev;
 
         if nearest == above {
             nearest = current_tick.prev_tick;
         }
 
         ticks.insert(above, empty_tick());
+        ticks.insert(prev, prev_tick);
+        ticks.insert(next, next_tick);
+
     } else {
         current_tick.liquidity -= amount;
         ticks.insert(above, current_tick);
