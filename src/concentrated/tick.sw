@@ -118,7 +118,7 @@ fn tick_cross(
         }
         
         //change fee growth values, push onto storagemap
-        let new_stored_tick: Tick = ticks.get(next);
+        let mut new_stored_tick: Tick = ticks.get(next);
         new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside1;
         new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside0;
         ticks.insert(next, new_stored_tick);
