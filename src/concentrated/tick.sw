@@ -140,8 +140,8 @@ fn tick_cross(
         let fee_g_1_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside1);
 
         //do the math
-        fee_g_0_cast128 = fee_growth_globalB - fee_g_0_cast128;
-        fee_g_1_cast128 = fee_growth_globalA - fee_g_1_cast128;
+        fee_g_0_cast128 = fee_growth_globalA - fee_g_0_cast128;
+        fee_g_1_cast128 = fee_growth_globalB - fee_g_1_cast128;
 
         //downcast to u64
         let fee_g_0_cast64: u64 = fee_g_0_cast128.lower;
