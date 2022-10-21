@@ -1,6 +1,7 @@
 library ticks;
 
 dep I24;
+dep Q64x64;
 dep tick_math;
 
 use core::num::*;
@@ -14,6 +15,7 @@ use std::{
 };
 
 use I24::*;
+use Q64x64::*;
 use tick_math::*;
 
 //modulo for I24
