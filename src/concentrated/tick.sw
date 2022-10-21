@@ -83,10 +83,11 @@ fn tick_cross(
     token_zero_to_one: bool
 ) -> (U128, I24) {
     //get seconds_growth from next in StorageMap
-    let mut stored_tick    = ticks.get(next);
+    let mut stored_tick = ticks.get(next);
     let outside_growth = ticks.get(next).seconds_growth_outside;
+
     //cast outside_growth into U256
-    let seconds_growth_outside = ~U256::from(0,0,0,outside_growth);
+    let seconds_growth_outside = ~U256::from(0,0,outside_growth.upper,outside_growth.lower);
 
     //do the math, downcast to U128, store in ticks
     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
