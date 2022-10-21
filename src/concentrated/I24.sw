@@ -10,6 +10,12 @@ pub struct I24 {
     underlying: u32,
 }
 
+impl core::num::Mod for I24 {
+    fn modulo(self, other: Self) -> Self {
+        
+    }
+}
+
 pub trait From {
     /// Function for creating I24 from u32
     fn from(underlying: u32) -> Self;

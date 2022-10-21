@@ -38,7 +38,7 @@ pub fn check_sqrt_price_bounds(sqrt_price: Q64x64) {
     assert(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE());
 }
 
-pub fn get_price_at_tick(tick: I24) -> Q128x128 {
+pub fn get_price_at_tick(tick: I24) -> Q64x64 {
     let zero: U256 = ~U256::from(0,0,0,0);
     let absTick = tick.abs();
     let absTick: u64 = absTick;
@@ -193,16 +193,16 @@ pub fn get_price_at_tick(tick: I24) -> Q128x128 {
         ~U256::from(0,0,0,1)
     };
     let price: U256 = ratio + round_up;
-    return ~Q128x128::from(~U128::from(price.a, price.b), ~U128::from(price.c, price.d));
+    return ~Q64x64::from(~U128::from(price.b, price.c));
 }
 
 //TODO: call once at deployment time
-pub fn MIN_SQRT_PRICE() -> Q128x128 {
-    get_price_at_tick(MIN_TICK())
+pub fn MIN_SQRT_PRICE() -> Q64x64 {
+    Q64x64 { value : ~U128::from(0,0)}
 }
 
-pub fn MAX_SQRT_PRICE() -> Q128x128 {
-    get_price_at_tick(MAX_TICK())
+pub fn MAX_SQRT_PRICE() -> Q64x64 {
+    Q64x64 { value : ~U128::from(0,0)}
 }
 
 fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
