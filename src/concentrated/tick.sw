@@ -12,13 +12,21 @@ use std::{
 
 use I24::*;
 use tick_math::*;
-use pool::{Tick};
 
 //modulo for I24
 impl core::ops::Mod for I24{
     fn modulo(self, other: I24) -> I24 {
         return (self - other * (self / other));
     }
+}
+
+pub struct Tick {
+    prev_tick: I24,
+    next_tick: I24,
+    liquidity: U128,
+    fee_growth_outside0: u64,
+    fee_growth_outside1: u64,
+    seconds_growth_outside: U128
 }
 
 fn empty_tick() -> Tick {
@@ -28,7 +36,7 @@ fn empty_tick() -> Tick {
         liquidity: ~U128::from(0,0),
         fee_growth_outside0: 0,
         fee_growth_outside1: 0,
-        seconds_growth_outside: ~U128::from(0,0)
+        seconds_growth_outside: ~U128::from(0,0,0,0)
     }
 }
 
@@ -47,11 +55,11 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
     let max_tick_i24 = ~I24::max();
     let max_tick_u32 = max_tick_i24.abs();
     let max_tick_u64: u64 = max_tick_u32;
-    let max_tick_u128: ~U128::from(0, max_tick_u64);
+    let max_tick_u128 = ~U128::from(0, max_tick_u64);
 
     //cast tick_spacing to U128
     let tick_spacing_u64: u64 = tick_spacing;
-    let tick_spacing_u128: ~U128::from(0, tick_spacing_64);
+    let tick_spacing_u128 = ~U128::from(0, tick_spacing_64);
 
     //liquidity math
     let double_tick_spacing = tick_spacing_u128 * ~U128::from(0,2);
@@ -72,7 +80,7 @@ fn tick_cross(
     token_zero_to_one: bool
 ) -> (U128, I24) {
     //get seconds_growth from next in StorageMap
-    let stored_tick    = ticks.get(next);
+    let mut stored_tick    = ticks.get(next);
     let outside_growth = ticks.get(next).seconds_growth_outside;
     //cast outside_growth into U256
     let seconds_growth_outside = ~U256::from(0, outside_growth);
@@ -93,7 +101,7 @@ fn tick_cross(
             liquidity += ticks.get(next).liquidity;
         }
         //change fee growth values, push onto storagemap
-        let new_stored_tick: Tick = ticks.get(next);
+        let mut new_stored_tick: Tick = ticks.get(next);
         new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside0;
         new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside1;
         ticks.insert(next, new_stored_tick);
@@ -127,25 +135,25 @@ fn tick_insert(
     ref mut ticks: StorageMap<I24, Tick>,
     fee_growth_global0: U256, fee_growth_global1: U256,  
     seconds_growth_global: U256, current_price: U256,
-    amount: U128,  nearest: I24
+    amount: U128,  ref mut nearest: I24,
     above: I24, below: I24, 
     prev_above: I24, prev_below: I24
 ) -> I24 {
     // check inputs
     assert(below_tick < above_tick);
-    assert(below_tick > ~tick_math::MIN_TICK() || below_tick == ~tick_math::MIN_TICK());
-    assert(above_tick < ~tick_math::MAX_TICK() || above_tick == ~tick_math::MAX_TICK());
+    assert(below_tick > MIN_TICK() || below_tick == MIN_TICK());
+    assert(above_tick < MAX_TICK() || above_tick == MAX_TICK());
     
-    below_tick = ticks.get(below);
+    let mut below_tick = ticks.get(below);
 
-    if below_tick.liquidity != 0 || below == ~tick_math::MIN_TICK() {
+    if below_tick.liquidity != 0 || below == MIN_TICK() {
         // tick has already been initialized
         below_tick.liquidity += amount;
         ticks.insert(below, below_tick);
     } else {
         // tick has not been initialized
-        prev_tick = ticks.get(prev_below);
-        prev_next = prev_tick.next_tick;
+        let mut prev_tick = ticks.get(prev_below);
+        let prev_next = prev_tick.next_tick;
         
         // check below ordering
         assert(prev_tick.liquidity != 0 || prev_below == ~tick_math::MIN_TICK());
@@ -165,9 +173,9 @@ fn tick_insert(
                 prev_below,
                 prev_next,
                 amount,
-                0,
-                0,
-                0
+                fee_growth_outside0: 0,
+                fee_growth_outside1: 0,
+                seconds_growth_outside: ~U256::from(0,0,0,0)
             });
         }
         prev_tick.next_tick = below;
@@ -176,7 +184,7 @@ fn tick_insert(
 
     above_tick = ticks.get(above);
 
-    if above_tick.liquidity != 0 || above == ~tick_math::MAX() {
+    if above_tick.liquidity != 0 || above == MAX() {
         above_tick.liquidity += amount;
         ticks.insert(above, above_tick);
     } else {
@@ -199,22 +207,25 @@ fn tick_insert(
             });
         } else {
             ticks.insert(above, Tick {
-                prev_abovem
+                prev_above,
                 prev_next,
                 amount,
-                0,
-                0,
-                0
+                fee_growth_outside0: 0,
+                fee_growth_outside1: 0,
+                seconds_growth_outside: U256::from(0,0,0,0)
             });
         }
-        prev.next_tick = above;
-        ticks.get(prev_next).prev_tick = above;
+        prev_tick.next_tick = above;
+        ticks.insert(prev, prev_tick);
+        prev_next_tick = ticks.get(prev_next);
+        prev_next_tick.prev_tick = above;
+        ticks.insert(prev_next, prev_next_tick);
     }
 
-    tick_at_price: I24 = ~tick_math::get_at_price(current_price);
+    let tick_at_price: I24 = get_tick_at_price(current_price);
 
-    above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
-    below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
+    let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
+    let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
     
     if above_between {
         nearest = above;
@@ -227,17 +238,17 @@ fn tick_insert(
 
 #[storage(read, write)]
 fn tick_remove(
-    ref mut ticks: StorageMap<I24, Tick>, 
+    ref mut ticks: StorageMap<I24, Tick>,
     below: I24, above: I24,
     nearest: I24,
     amount: U128
 ) -> I24 {
-    current_tick = ticks.get(below);
+    let mut current_tick = ticks.get(below);
 
-    if lower !- tick_math::MIN_TICK() && current_tick.liquidity == amount {
+    if lower != MIN_TICK() && current_tick.liquidity == amount {
         // clear below tick from storage
-        prev_tick = ticks.get(current_tick.prev_tick);
-        next_tick = ticks.get(current_tick.next_tick);
+        let mut prev_tick = ticks.get(current_tick.prev_tick);
+        let mut next_tick = ticks.get(current_tick.next_tick);
 
         prev_tick.next_tick = current_tick.next_tick;
         next_tick.prev_tick = current_tick.prev_tick;
@@ -253,12 +264,12 @@ fn tick_remove(
         ticks.insert(below, current_tick);
     }
 
-    let current_tick = ticks.get(above);
+    let mut current_tick = ticks.get(above);
 
-    if above != tick_math::MAX_TICK() && current_tick.liquidity == amount {
+    if above != MAX_TICK() && current_tick.liquidity == amount {
         // clear above tick from storage
-        let prev_tick = ticks.get(current_tick).prev_tick;
-        let next_tick = ticks.get(current_tick).next_tick;
+        let mut prev_tick = ticks.get(current_tick).prev_tick;
+        let mut next_tick = ticks.get(current_tick).next_tick;
 
         prev_tick.next_tick = current.next_tick;
         next_tick.prev_tick = current.prev_tick;

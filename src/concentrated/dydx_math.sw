@@ -11,7 +11,7 @@ use std::u128::*;
 
 // Obligatory note on liquidity
 // Note that dydx math is implicitly expecting a Q.
-fn get_dy(
+pub fn get_dy(
     liquidity: U128,
     price_upper: Q64x64,
     price_lower: Q64x64,
@@ -26,7 +26,7 @@ fn get_dy(
     }
     dy
 }
-fn get_dx(
+pub fn get_dx(
     liquidity: U128,
     price_upper: Q64x64,
     price_lower: Q64x64,
@@ -46,7 +46,7 @@ fn get_dx(
     }
     dx
 }
-fn get_liquidity_for_amounts(
+pub fn get_liquidity_for_amounts(
     price_lower: Q64x64,
     price_upper: Q64x64,
     current_price: Q64x64,
@@ -74,7 +74,7 @@ fn get_liquidity_for_amounts(
     }
     liquidity
 }
-fn get_amounts_for_liquidity(
+pub fn get_amounts_for_liquidity(
     price_upper: Q64x64,
     price_lower: Q64x64,
     current_price: Q64x64,

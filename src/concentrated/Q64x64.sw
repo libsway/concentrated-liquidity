@@ -84,9 +84,7 @@ impl Q64x64 {
     fn multiply(self, other: Self) -> Q128x128 {
         let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
         let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
-        Q128x128 {
-            value: ~Q128x128::from(int_u128, dec_u128)
-        }
+        return ~Q128x128::from(int_u128, dec_u128);
     }
 }
 impl core::ops::Divide for Q64x64 {
@@ -190,24 +188,5 @@ impl Root for Q64x64 {
         Self {
             value: nominator,
         }
-    }
-}
-impl Exponent for Q64x64 {
-    /// Exponent function. e ^ x
-    fn exp(exponent: Self) -> Self {
-        let one = ~Q64x64::from_uint(1);
-
-        //coefficients in the Taylor series up to the seventh power
-        let p2 = ~Q64x64::from(~U128::from(0, 2147483648)); // p2 == 1 / 2!
-        let p3 = ~Q64x64::from(~U128::from(0, 715827882)); // p3 == 1 / 3!
-        let p4 = ~Q64x64::from(~U128::from(0, 178956970)); // p4 == 1 / 4!
-        let p5 = ~Q64x64::from(~U128::from(0, 35791394)); // p5 == 1 / 5!
-        let p6 = ~Q64x64::from(~U128::from(0, 5965232)); // p6 == 1 / 6!
-        let p7 = ~Q64x64::from(~U128::from(0, 852176)); // p7 == 1 / 7!
-        // common technique to counter loosing sugnifucant numbers in usual approximation
-        // Taylor series approximation of exponantiation function minus 1. The subtraction is done to deal with accuracy issues
-        let res_minus_1 = exponent + exponent * exponent * (p2 + exponent * (p3 + exponent * (p4 + exponent * (p5 + exponent * (p6 + exponent * p7)))));
-        let res = res_minus_1 + one;
-        res
     }
 }

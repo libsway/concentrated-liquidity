@@ -1,8 +1,8 @@
 contract;
 
-//dep libs;
+dep cl_libs;
 
-//use concentrated_liquidity_libs::I24::*;
+use cl_libs::*;
 
 abi MyContract {
     fn test_function() -> bool;

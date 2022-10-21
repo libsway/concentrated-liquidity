@@ -17,6 +17,10 @@ use std::{
 
 use cl_libs::I24::*;
 use cl_libs::Q64x64::*;
+use cl_libs::dydx_math::*;
+use cl_libs::tick_math::*;
+use cl_libs::tick::*;
+
 
 pub enum ConcentratedLiquidityErrors {
     Locked: (),
@@ -31,15 +35,6 @@ pub enum ConcentratedLiquidityErrors {
     UpperOdd: (),
     MaxTickLiquidity: (),
     Overflow: (),
-}
-
-struct Tick {
-    prev_tick: I24,
-    next_tick: I24,
-    liquidity: U128,
-    fee_growth_outside0: u64,
-    fee_growth_outside1: u64,
-    seconds_growth_outside: U128
 }
 
 struct Position {
@@ -82,7 +77,7 @@ abi ConcentratedLiquidityPool {
 }
 
 // Should be all storage variables
-storage {
+storage { 
     token0: ContractId = (),
     token1: ContractId = (),
 
@@ -171,8 +166,6 @@ impl ConcentratedLiquidityPool for Contract {
         storage.reserve0 -= amount0_fees;
         storage.reserve1 -= amount1_fees;
 
-        let sender: Identity= msg_sender().unwrap();
-
         transfer(amount0_fees, storage.token0, sender);
         transfer(amount1_fees, storage.token1, sender);
 
@@ -213,7 +206,7 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 
 #[storage(read, write)]
 fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128) -> (u64, u64) {
-    let position = storage.positions.get(owner, lower, upper);
+    let position = storage.positions.get((owner, lower, upper));
 
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 

@@ -13,7 +13,7 @@ fn delta_math (liquidity: U128, delta: U128) -> U128 {
     let delta_sum = liquidity + delta;
     let delta_sub = liquidity - delta;
 
-    if delta < 0 {
+    if delta < ~U128::from(0, 0) {
     //Panic if condition not met    
         assert(delta_sub < liquidity);
         return delta_sub;
@@ -21,7 +21,7 @@ fn delta_math (liquidity: U128, delta: U128) -> U128 {
 
     else {
     //Panic if condition not met
-        assert(delta_sum > liquidity || delta_sum = liquidity);
+        assert((delta_sum > liquidity) || (delta_sum == liquidity));
         return delta_sum;
     }
 }

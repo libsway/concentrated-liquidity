@@ -1,29 +1,30 @@
 library tick_math;
 
 dep I24;
-// dep Q64x64;
+dep Q64x64;
+dep Q128x128;
 
 use I24::*;
-
 use std::{
     u128::*,
     u256::*,
     result::Result,
     math::*, 
 };
-// use Q64x64::Q64x64;
+use Q64x64::*;
+use Q128x128::*;
+
+impl U256 {
+    fn modulo(self, other: U256) -> U256 {
+        return (self - other * (self / other));
+    }
+}
 pub fn MAX_TICK() -> I24 {
-    return ~I24::max()
+    return ~I24::max();
+
 }
 pub fn MIN_TICK() -> I24 {
-    return ~I24::min()
-}
-//TODO: call once at deployment time
-pub fn MIN_SQRT_PRICE() -> Q64X64 {
-    return get_price_at_tick(MIN_TICK)
-}
-pub fn MAX_SQRT_PRICE() -> Q64X64 {
-    return get_price_at_tick(MAX_TICK)
+    return ~I24::min();
 }
 
 impl U256 {
@@ -32,13 +33,12 @@ impl U256 {
     }
 }
 
-pub fn check_sqrt_price_bounds(sqrt_price: Q64X64) -> bool {
-    if (sqrt_price < MIN_SQRT_PRICE() || sqrt_price > MAX_SQRT_PRICE || sqrt_price == MAX_SQRT_PRICE) {
-        
-    }
+pub fn check_sqrt_price_bounds(sqrt_price: Q64x64) {
+    assert(sqrt_price < MIN_SQRT_PRICE());
+    assert(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE());
 }
 
-pub fn get_price_at_tick(tick: I24) -> U128 {
+pub fn get_price_at_tick(tick: I24) -> Q128x128 {
     let zero: U256 = ~U256::from(0,0,0,0);
     let absTick = tick.abs();
     let absTick: u64 = absTick;
@@ -187,24 +187,32 @@ pub fn get_price_at_tick(tick: I24) -> U128 {
         let ratio = ~U256::max() / ratio;
     }
     // shr 128 to downcast to a U128
-    let round_up: U256 = if (ratio % (1 << 128) == 0) {
+    let round_up: U256 = if (ratio % (~U256::from(0,0,0,1) << 128) == ~U256::from(0,0,0,0)) {
         ~U256::from(0,0,0,0)
     } else {
         ~U256::from(0,0,0,1)
     };
-    let price: U256 = (ratio >> 128) + round_up;
-    return price.as_u128().unwrap();
+    let price: U256 = ratio + round_up;
+    return ~Q128x128::from(~U128::from(price.a, price.b), ~U128::from(price.c, price.d));
 }
 
-fn get_tick_at_price(sqrtprice: Q64X64) -> I24 {
-    // need to validate ratio
-    if (sqrtprice < MIN_SQRT_PRICE || sqrtPriceX96 >= MAX_SQRT_PRICE) revert PriceOutOfBounds();
+//TODO: call once at deployment time
+pub fn MIN_SQRT_PRICE() -> Q128x128 {
+    get_price_at_tick(MIN_TICK())
+}
+
+pub fn MAX_SQRT_PRICE() -> Q128x128 {
+    get_price_at_tick(MAX_TICK())
+}
+
+fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
+    check_sqrt_price_bounds(sqrt_price);
 
     // square price
-    let price: Q128X128 = sqrtprice * sqrtprice;
+    let mut price: Q128x128 = sqrt_price * sqrt_price;
 
     // base value for tick change -> 1.0001
-    let tick_base = ~Q128X128::from_uint(10001 << (128 - 4));
+    let mut tick_base = ~Q128x128::from(~U128::from(0, 0), ~U128::from(10001 << (64 - 4), 0));
 
     //TODO: should we round up?
     // change of base; log base 1.0001 (price) = log base 2 (price) / log base 2 (1.0001)
@@ -213,3 +221,4 @@ fn get_tick_at_price(sqrtprice: Q64X64) -> I24 {
     // return base 1.0001 price
     log_base_tick_of_price
 }
+

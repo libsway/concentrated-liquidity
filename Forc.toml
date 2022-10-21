@@ -1,6 +1,6 @@
 [project]
 authors = ["ControlCplusControlV"]
-entry = "pool.sw"
+entry = "main.sw"
 license = "Apache-2.0"
 name = "amm"
 
