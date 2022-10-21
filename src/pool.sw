@@ -140,7 +140,7 @@ impl ConcentratedLiquidityPool for Contract {
         let price_upper = get_price_at_tick(upper);
         let current_price = storage.price;
 
-        let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, amount1_desired, amount0_desired);
+        let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, ~U128::from(0, amount1_desired), ~U128::from(0, amount0_desired));
 
         // check to avoid overflow
 
@@ -205,16 +205,16 @@ impl ConcentratedLiquidityPool for Contract {
 }
 #[storage(read)]
 fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityErrors> {
-    if lower % ~I24::from_uint(storage.tick_spacing) != 0 {
+    if lower % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
         return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
     }
-    if (lower / ~I24::from_uint(storage.tick_spacing)) % 2 != 0 {
+    if (lower / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) != ~I24::from_uint(0) {
         return Result::Err(ConcentratedLiquidityErrors::LowerEven);
     }
-    if upper % ~I24::from_uint(storage.tick_spacing) != 0 {
+    if upper % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
         return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
     }
-    if (upper / ~I24::from_uint(storage.tick_spacing)) % 2 == 0 {
+    if (upper / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) == ~I24::from_uint(0) {
         return Result::Err(ConcentratedLiquidityErrors::UpperOdd);
     }
 

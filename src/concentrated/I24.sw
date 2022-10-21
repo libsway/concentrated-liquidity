@@ -10,11 +10,6 @@ pub struct I24 {
     underlying: u32,
 }
 
-impl core::num::Mod for I24 {
-    fn modulo(self, other: Self) -> Self {
-        
-    }
-}
 
 pub trait From {
     /// Function for creating I24 from u32
@@ -105,6 +100,17 @@ impl I24 {
         // as the minimal value of I24 is 2147483648 (1 << 31) we should add ~I24::indent() (1 << 31) 
         let underlying: u32 = value + ~Self::indent();
         Self { underlying }
+    }
+}
+
+impl core::ops::Mod for I24 {
+    fn modulo(self, other: Self) -> Self {
+        let remainder = self.abs() % other.abs();
+        if (self.underlying > ~Self::indent() && other.underlying > ~Self::indent()) || (self.underlying < ~Self::indent() && other.underlying < ~Self::indent()) {
+            return ~I24::from_uint(remainder);
+        } else {
+            return ~I24::neg_from(remainder);
+        }
     }
 }
 
