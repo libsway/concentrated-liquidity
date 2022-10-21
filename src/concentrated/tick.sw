@@ -164,7 +164,7 @@ fn tick_cross(
 #[storage(read, write)]
 fn tick_insert(
     ref mut ticks: StorageMap<I24, Tick>,
-    fee_growth_global0: U128, fee_growth_global1: U128,  
+    fee_growth_global0: u64, fee_growth_global1: u64,  
     seconds_growth_global: U128, current_price: Q64x64,
     amount: U128,  ref mut nearest: I24,
     above: I24, below: I24, 
@@ -232,8 +232,8 @@ fn tick_insert(
                 prev_tick: prev_above,
                 next_tick: prev_next,
                 liquidity: amount,
-                fee_growth_outside0: fee_growth_global0.d,
-                fee_growth_outside1: fee_growth_global1.d,
+                fee_growth_outside0: fee_growth_global0,
+                fee_growth_outside1: fee_growth_global1,
                 seconds_growth_outside: seconds_growth_global
             });
         } else {
@@ -248,12 +248,12 @@ fn tick_insert(
         }
         prev_tick.next_tick = above;
         ticks.insert(prev_above, prev_tick);
-        let prev_next_tick = ticks.get(prev_next);
+        let mut prev_next_tick = ticks.get(prev_next);
         prev_next_tick.prev_tick = above;
         ticks.insert(prev_next, prev_next_tick);
     }
 
-    let tick_at_price: I24 = fget_tick_at_price(current_price);
+    let tick_at_price: I24 = get_tick_at_price(current_price);
 
     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
