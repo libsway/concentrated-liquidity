@@ -104,10 +104,24 @@ fn tick_cross(
         } else{
             liquidity += ticks.get(next).liquidity;
         }
-        //change fee growth values, push onto storagemap
+        //cast to U128
         let mut new_stored_tick: Tick = ticks.get(next);
-        new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside0;
-        new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside1;
+        let fee_g_0_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside0);
+        let fee_g_1_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside1);
+
+        //do the math
+        fee_g_0_cast128 = fee_growth_globalB - fee_g_0_cast128;
+        fee_g_1_cast128 = fee_growth_globalA - fee_g_1_cast128;
+
+        //downcast to u64
+        let fee_g_0_cast64: u64 = fee_g_0_cast128.lower;
+        let fee_g_1_cast64: u64 = fee_g_1_cast128.lower;
+
+        //push to new_stored_tick
+        new_stored_tick.fee_growth_outside0 = fee_g_0_cast64;
+        new_stored_tick.fee_growth_outside1 = fee_g_1_cast64;
+
+        //push onto storagemap
         ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
@@ -120,11 +134,24 @@ fn tick_cross(
         } else{
             liquidity -= ticks.get(next).liquidity;
         }
-        
-        //change fee growth values, push onto storagemap
+        //cast to U128
         let mut new_stored_tick: Tick = ticks.get(next);
-        new_stored_tick.fee_growth_outside0 = fee_growth_globalB - new_stored_tick.fee_growth_outside1;
-        new_stored_tick.fee_growth_outside1 = fee_growth_globalA - new_stored_tick.fee_growth_outside0;
+        let fee_g_0_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside0);
+        let fee_g_1_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside1);
+
+        //do the math
+        fee_g_0_cast128 = fee_growth_globalB - fee_g_0_cast128;
+        fee_g_1_cast128 = fee_growth_globalA - fee_g_1_cast128;
+
+        //downcast to u64
+        let fee_g_0_cast64: u64 = fee_g_0_cast128.lower;
+        let fee_g_1_cast64: u64 = fee_g_1_cast128.lower;
+
+        //push to new_stored_tick
+        new_stored_tick.fee_growth_outside0 = fee_g_0_cast64;
+        new_stored_tick.fee_growth_outside1 = fee_g_1_cast64;
+
+        //push onto storagemap
         ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
