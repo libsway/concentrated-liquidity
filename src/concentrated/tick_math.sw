@@ -205,7 +205,7 @@ pub fn MAX_SQRT_PRICE() -> Q64x64 {
     Q64x64 { value : ~U128::from(0,0)}
 }
 
-fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
+pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
     check_sqrt_price_bounds(sqrt_price);
 
     // square price
