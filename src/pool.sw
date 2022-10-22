@@ -132,7 +132,7 @@ impl ConcentratedLiquidityPool for Contract {
         // return value
         let mut amount_out = 0;
 
-        while amount_in != 0 {
+        while amount_in_left != 0 {
             let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
             let mut output = 0;
             let mut cross = false;
@@ -144,10 +144,14 @@ impl ConcentratedLiquidityPool for Contract {
                     //TODO: only represents max u64 in liquidity (max possible is max u128)
                     let liquidity_padded = Q128x128 { value: ~U256::from(current_liquidity.upper, current_liquidity.lower, 0, 0) };
                     //TODO: needs to be converted to a Q64x64
-                    let mut new_price = mul_div_rounding_up_q64x64(current_liquidity, current_price, liquidity_padded + current_price * ~Q64x64::from(~U128::from_uint(amount_in_left));
+                    let mut new_price = mul_div_rounding_up_q64x64(current_liquidity, current_price, liquidity_padded + current_price * ~Q64x64::from(~U128::from_uint(amount_in_left)));
 
                     if !((next_tick_price < new_price || next_tick_price == new_price) && new_price < current_price) {
-                        new_price = mul_div_rounding_up_q64x64(~U256::from(0,1,0,0), liquidity_padded, liquidity_padded / current_price + ~Q64x64::from(~U128::from_uint(amount_in_left));
+                        new_price = mul_div_rounding_up_q64x64(
+                            ~U256::from(0,1,0,0), 
+                            liquidity_padded, 
+                            liquidity_padded / current_price + ~Q64x64::from(~U128::from(amount_in_left, 0))
+                        );
                     }
                     output = get_dy(current_liquidity, new_price, current_price, false);
                     current_price = new_price;
@@ -388,7 +392,7 @@ impl ConcentratedLiquidityPool for Contract {
     }
 
     #[storage(read, write)]
-    fn burn(lower: I24, upper: I24, amount: U128) -> (u64, u64, u64, u64) {
+    fn burn(lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
         let current_price = storage.price;
@@ -396,16 +400,14 @@ impl ConcentratedLiquidityPool for Contract {
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
         if ((price_lower < current_price) || (price_lower == current_price)) && current_price > price_upper {
-            storage.liquidity -=amount;
+            storage.liquidity -= liquidity_amount;
         }
-
-        let (token0_amount, token1_amount) = get_amounts_for_liquidity(price_upper, price_lower, current_price, amount, false);
-
-        // if (amount > uint128(type(int128).max)) revert Overflow();
 
         let sender: Identity= msg_sender().unwrap();
 
-        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_minted);
+        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_amount);
+
+         let (token0_amount, token1_amount) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_amount, false);
 
         let amount0:u64 = token0_amount + amount0_fees;
         let amount1:u64 = token1_amount + amount1_fees;
@@ -417,8 +419,8 @@ impl ConcentratedLiquidityPool for Contract {
         transfer(amount1, storage.token1, sender);
 
         // nearestTick = Ticks.remove(ticks, lower, upper, amount, nearestTick);
-
-        (0,0,0,0)
+        //TODO: get fee growth in range and calculate fees based on liquidity
+        (token0_amount, token1_amount, 0, 0)
     }
 
     #[storage(read, write)]

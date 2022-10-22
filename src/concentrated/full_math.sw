@@ -1,8 +1,11 @@
 library full_math;
 
+dep Q128x128;
+
 use std::{result::Result, u128::*, u256::*};
 use std::revert::revert;
 use core::ops::*;
+use Q128x128::*;
 
 pub enum FullMathError {
     DivisionByZero: (),
@@ -17,7 +20,6 @@ pub fn mul_div_u64(base: u64, factor: u64, denominator: u64) -> u64 {
         // panic on overflow
         revert(0);
     }
-
     res.lower
 }
 
