@@ -1,11 +1,13 @@
 library full_math;
 
 dep Q128x128;
+dep Q64x64;
 
 use std::{result::Result, u128::*, u256::*};
 use std::revert::revert;
 use core::ops::*;
 use Q128x128::*;
+use Q64x64::*;
 
 pub enum FullMathError {
     DivisionByZero: (),
@@ -78,17 +80,34 @@ pub fn mul_div_u256(base: U256, factor: U128, denominator: U128) -> U128 {
     }
     ~U128::from(res_u256.c, res_u256.d)
 }
-pub fn mul_div_rounding_up_q64x64(base: U128, factor: U128, denominator: Q128x128) -> Q64x64 {
-    let base_q128x128        = Q128X128 { value: ~U256::from(base.upper, base.lower, 0, 0) };
-    let factor_q128x128      = Q128x128 { value: ~U256::from(factor.upper, factor.lower, 0, 0) };
-    let denominator_q128x128 = Q128x128 { value: ~U256::from(0, 0, denominator.upper, denominator.lower) };
-    let mut res_q128x128 = (base_u256 * factor_u256) / denominator_u256;
-    if res_q128x128 * denominator_u256 != base_u256 * factor_u256 {
-        res_q128x128 = res_q128x128 + ~U256::from(0, 0, 0, 1);
-    }
-    if (res_q128x128.a != 0) || (res_q128x128.b != 0) {
+pub fn mul_div_rounding_up_u256(base: U256, factor: U128, denominator: U128) -> U128 {
+    let base_u256 = base;
+    let factor_u256 = ~U256::from(0, 0, factor.upper, factor.lower);
+    let denominator_u256 = ~U256::from(0, 0, denominator.upper, denominator.lower);
+    let res_u256 = (base_u256 * factor_u256) / denominator_u256;
+    if (res_u256.a != 0) || (res_u256.b != 0) {
         // panic on overflow
         revert(0);
     }
-    ~Q64x64::from(res_q128x128.value.b, res_q128x128.value.c)
+    let mut res_128 = U128{ upper: res_u256.c, lower: res_u256.d };
+    if res_u256 * denominator_u256 != base_u256 * factor_u256 {
+        res_128 = res_128 + ~U128::from(0, 1);
+    }
+    
+    res_128
+}
+
+pub fn mul_div_rounding_up_q64x64(base: U128, factor: U128, denominator: Q128x128) -> Q64x64 {
+    let base_q128x128        = Q128x128 { value: ~U256::from(base.upper, base.lower, 0, 0) };
+    let factor_q128x128      = Q128x128 { value: ~U256::from(factor.upper, factor.lower, 0, 0) };
+    let denominator_q128x128 = Q128x128 { value: denominator.value }; // TODO loss of precision here
+    let mut res_q128x128 = (base_q128x128 * factor_q128x128) / denominator_q128x128;
+    if res_q128x128 * denominator_q128x128 != base_q128x128 * factor_q128x128 {
+        res_q128x128 = res_q128x128 + Q128x128 { value: ~U256::from(0, 0, 0, 1)};
+    }
+    if (res_q128x128.value.a != 0) || (res_q128x128.value.b != 0) {
+        // panic on overflow
+        revert(0);
+    }
+    ~Q64x64::from( ~U128::from(res_q128x128.value.b, res_q128x128.value.c))
 }

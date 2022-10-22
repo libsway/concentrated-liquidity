@@ -67,6 +67,28 @@ impl core::ops::Subtract for Q128x128 {
         }
     }
 }
+impl core::ops::Multiply for Q128x128 {
+    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
+    fn multiply(self, other: Self) -> Self {
+        // If trying to subtract a larger number, panic.
+        let res = self.value * other.value;
+        // need some check
+        Self {
+            value: res,
+        }
+    }
+}
+impl core::ops::Divide for Q128x128 {
+    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
+    fn divide(self, other: Self) -> Self {
+        // If trying to subtract a larger number, panic.
+        let res = self.value / other.value;
+        // need some check
+        Self {
+            value: res,
+        }
+    }
+}
 
 impl Q128x128 {
     fn insert_sig_bits(ref mut self, msb_idx: u8, log_sig_bits: u64) -> U256 {
