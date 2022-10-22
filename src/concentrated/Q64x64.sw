@@ -172,7 +172,7 @@ impl U128 {
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
-        let cast128 = ~U128::from(0, ~Self::denominator() * uint);
+        let cast128 = ~U128::from(uint, 0);
         Self {
             value: cast128,
         }
