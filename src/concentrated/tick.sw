@@ -1,4 +1,4 @@
-library ticks;
+library tick;
 
 dep I24;
 dep Q64x64;
@@ -75,7 +75,7 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 }
 //TODO: do we need read permission?
 #[storage(read, write)]
-fn tick_cross(
+pub fn tick_cross(
     ref mut ticks: StorageMap<I24, Tick>,
     ref mut next: I24, 
     fee_growth_time: U256, ref mut liquidity: U128, 

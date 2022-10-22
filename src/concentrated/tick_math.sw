@@ -38,7 +38,7 @@ pub fn check_sqrt_price_bounds(sqrt_price: Q64x64) {
     assert(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE());
 }
 
-pub fn get_price_at_tick(tick: I24) -> Q64x64 {
+pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     let zero: U256 = ~U256::from(0,0,0,0);
     let absTick = tick.abs();
     let absTick: u64 = absTick;
