@@ -1,5 +1,5 @@
 [project]
-authors = ["ControlCplusControlV"]
+authors = ["alphak3y","ControlCplusControlV", "0xnexusflip"]
 entry = "pool.sw"
 license = "GPL-3.0"
 name = "amm"
