@@ -175,7 +175,7 @@ impl ConcentratedLiquidityPool for Contract {
 
                 if amount_in_left < max_dy || amount_in_left == max_dy {
                     //TODO: what is this constant? :thonk:
-                    new_price = current_price + mul_div(amount_in_left, 0x1000000000000000000000000, current_liquidity);
+                    new_price = current_price + mul_div(amount_in_left, ~u64::max(), current_liquidity);
 
                     output = get_dx(current_liquidity, current_price, new_price, false);
                     current_price = new_price;
@@ -268,7 +268,7 @@ impl ConcentratedLiquidityPool for Contract {
                 let mut max_dy = get_dy(current_liquidity, next_tick_price, current_price, false);
                 if amount_out_no_fee < max_dy || amount_out_no_fee == max_dy {
                     final_amount_out = (final_amount_out * 1000000) / (1000000 - swap_fee) + 1;
-                    let new_price = current_price - mul_div(final_amount_out, 0x10000000000000000, current_liquidity);
+                    let new_price = current_price - mul_div(final_amount_out, ~u64::max(), current_liquidity);
                     final_amount_in += get_dx(current_liquidity, new_price, current_price, false) + 1;
                     break;
                 } else {
