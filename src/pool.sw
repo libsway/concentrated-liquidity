@@ -250,7 +250,75 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64 {
-        10
+        let mut amount_out_no_fee = (amount_out * 1000000) / (1000000 - storage.swap_fee) + 1;
+        let mut current_price = storage.price;
+        let mut current_liquidity = storage.liquidity;
+        let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(nearest_tick).next_tick };
+        let mut next_tick: I24 = ~I24::new();
+        let tick_spacing = storage.tick_spacing;
+        let swap_fee = storage.swap_fee;
+
+        let mut final_amount_in: u64 = 0;
+        let mut final_amount_out: u64 = 0;
+        while amount_out_no_fee != 0 {
+            let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
+            if token_zero_to_one {
+                let mut max_dy = get_dy(current_liquidity, next_tick_price, current_price, false);
+                if amount_out_no_fee < max_dy || amount_out_no_fee == max_dy {
+                    final_amount_out = (final_amount_out * 1000000) / (1000000 - swap_fee) + 1;
+                    let new_price = current_price - mul_div(final_amount_out, 0x10000000000000000, current_liquidity);
+                    final_amount_in += get_dx(current_liquidity, new_price, current_price, false) + 1;
+                    break;
+                } else {
+                    if next_tick_to_cross / ~I24::from_uint(tick_spacing) % ~I24::from_uint(2) == ~I24::new(){
+                        current_liquidity -= storage.ticks.get(next_tick_to_cross).liquidity;
+                    } else {
+                        current_liquidity += storage.ticks.get(next_tick_to_cross).liquidity;
+                    }
+                    amount_out_no_fee -= max_dy - 1; // handle rounding issues
+                    let fee_amount = mul_div_rounding_up( max_dy, swap_fee, 1000000);
+                    if final_amount_out < (max_dy - swap_fee) || final_amount_out == (max_dy - swap_fee) {
+                        break;
+                    }
+                    final_amount_out -= (max_dy - fee_amount);
+                    next_tick = storage.ticks.get(next_tick_to_cross).prev_tick;
+                }
+                
+            } else {
+                let max_dx = get_dx(current_liquidity, current_price, next_tick_price, false);
+
+                if amount_out_no_fee < max_dx || amount_out_no_fee == max_dx {
+                    final_amount_out = (final_amount_out * 1000000) / (1000000 - swap_fee) + 1;
+
+                    liquidity_padded = ~Q64x64::from(~U128::from(current_liquidity.value.lower, 0));
+                    let mut new_price = mul_div_rounding_up_u256(liquidity_padded, current_price, liquidity_padded - current_price * final_amount_out);
+
+                    if !(current_price < new_price && (new_price < next_tick_price || new_price == next_tick_price)) {
+                        new_price = mul_div_rounding_up_u256(~U256::from(0,1,0,0), liquidity_padded, liquidity_padded / current_price - final_amount_out);
+                    }
+                    final_amount_in += get_dy(current_liquidity, current_price, new_price, false) + 1;
+                    break;
+                } else {
+                    final_amount_in += get_dy(current_liquidity, current_price, next_tick_price, false);
+                    if next_tick_to_cross / ~I24::from_uint(tick_spacing) % ~I24::from_uint(2) == ~I24::new(){
+                        current_liquidity += storage.ticks.get(next_tick_to_cross).liquidity;
+                    } else {
+                        current_liquidity -= storage.ticks.get(next_tick_to_cross).liquidity;
+                    }
+                    amount_out_no_fee -= max_dx + 1; // resolve rounding errors
+                    let fee_amount = mul_div_rounding_up(max_dx, swap_fee, 1000000);
+                    if final_amount_out < (max_dx - fee_amount) || final_amount_out == (max_dx - fee_amount){
+                        break;
+                    }
+                    final_amount_out -= (max_dx - fee_amount);
+                    next_tick = storage.ticks.get(next_tick_to_cross).next_tick;
+                }
+            }
+            current_price = next_tick_price;
+            assert(next_tick_to_cross != next_tick); // check for insufficient output liquidity
+            next_tick_to_cross = next_tick;
+        }
+
     }
 
     #[storage(read, write)]
