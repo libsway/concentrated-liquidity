@@ -260,8 +260,8 @@ impl ConcentratedLiquidityPool for Contract {
         let tick_spacing = storage.tick_spacing;
         let swap_fee = storage.swap_fee;
 
-        let mut final_amount_in: u64 = 0;
-        let mut final_amount_out: u64 = amount_out;
+        let mut final_amount_in: U128 = ~U128::from(0,0);
+        let mut final_amount_out: U128 = ~U128::from(0,amount_out);
         let mut amount_out_no_fee = ~U128::from(0, amount_out_no_fee);
         while amount_out_no_fee != ~U128::from(0,0) {
             let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
