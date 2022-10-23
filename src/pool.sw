@@ -51,11 +51,11 @@ abi ConcentratedLiquidityPool {
     #[storage(read, write)]
     fn set_price(price : Q64x64);
 
-    // #[storage(read, write)]
-    // fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128;
+    #[storage(read, write)]
+    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128;
 
-    // #[storage(read, write)]
-    // fn collect(tickLower: I24, tickUpper: I24) -> (u64, u64);
+    #[storage(read, write)]
+    fn collect(tickLower: I24, tickUpper: I24) -> (u64, u64);
 
     // #[storage(read, write)]
     // fn burn(lower: I24, upper: I24, amount: U128) -> (u64, u64, u64, u64);
@@ -82,24 +82,25 @@ abi ConcentratedLiquidityPool {
 // Should be all storage variables
 storage { 
 
-    // token0: ContractId = ~ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
-    // token1: ContractId = ~ContractId::from(0x0000000000000000000000000000000000000000000000000000000000000000),
+    token0: ContractId = ContractId{value :0x0000000000000000000000000000000000000000000000000000000000000000},
+    token1: ContractId = ContractId{value :0x0000000000000000000000000000000000000000000000000000000000000000},
 
-    // max_fee: u32 = 100000,
-    // tick_spacing: u32 = 10, // implicitly a u24
-    // swap_fee: u32 = 2500,
+    max_fee: u32 = 100000,
+    tick_spacing: u32 = 10, // implicitly a u24
+    swap_fee: u32 = 2500,
     
-    //bar_fee_to: Identity = (),
+    // bar_fee_to: Identity = (),
 
-    // liquidity: U128 = U128{upper: 0, lower: 0},
+    liquidity: U128 = U128{upper: 0, lower: 0},
 
-    // seconds_growth_global: U128 = U128{upper: 0, lower: 0},
-    // last_observation: u32 = 0,
+    seconds_growth_global: U128 = U128{upper: 0, lower: 0},
+    last_observation: u32 = 0,
 
-    // fee_growth_global0: u64 = Q64x64::from_uint(0),
-    // fee_growth_global1: u64 = Q64x64::from_uint(0),
+    //TODO: change to Q64x64
+    fee_growth_global0: u64 = 0,
+    fee_growth_global1: u64 = 0,
 
-    // bar_fee: u64 = 0,
+    bar_fee: u64 = 0,
 
     token0_protocol_fee: u64 = 0,
     token1_protocol_fee: u64 = 0,
@@ -107,10 +108,10 @@ storage {
     reserve0: u64 = 0,
     reserve1: u64 = 0,
 
-    // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    price: Q64x64 = ~Q64x64::from_uint(0), 
+    // Originally Sqrt of price aka. √(y/x), multiplied by 2^64.
+    price: Q64x64 = Q64x64 { value: U128{upper:0,lower:0} },
     
-    nearest_tick: I24 = I24 { underlying: 2147483648u32}, // Zero
+    nearest_tick: I24 = I24 { underlying: 2147483648u32 }, // Zero
 
     // unlocked: bool = false,
 
@@ -362,64 +363,64 @@ impl ConcentratedLiquidityPool for Contract {
         ()
     }
 
-    // #[storage(read, write)]
-    // fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128 {
-    //     _ensure_tick_spacing(upper, lower).unwrap();
+    #[storage(read, write)]
+    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128 {
+        _ensure_tick_spacing(upper, lower).unwrap();
 
-    //     let price_lower = get_price_sqrt_at_tick(lower);
-    //     let price_upper = get_price_sqrt_at_tick(upper);
-    //     let current_price = storage.price;
+        let price_lower = get_price_sqrt_at_tick(lower);
+        let price_upper = get_price_sqrt_at_tick(upper);
+        let current_price = storage.price;
 
-    //     let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, ~U128::from(0, amount1_desired), ~U128::from(0, amount0_desired));
+        let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, ~U128::from(0, amount1_desired), ~U128::from(0, amount0_desired));
 
-    //     // _updateSecondsPerLiquidity(uint256(liquidity));
+        // _updateSecondsPerLiquidity(uint256(liquidity));
 
-    //     let sender: Identity= msg_sender().unwrap();
+        let sender: Identity= msg_sender().unwrap();
 
-    //     let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_minted);
+        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_minted);
 
-    //     if amount0_fees > 0 {
-    //         transfer(amount0_fees, storage.token0, sender);
-    //         storage.reserve0 -= amount0_fees;
-    //     }
-    //     if amount1_fees > 0 {
-    //         transfer(amount1_fees, storage.token1, sender);
-    //         storage.reserve1 -= amount1_fees;
-    //     }
-    //     if (price_lower < current_price || price_lower == current_price) && (current_price < price_upper) {
-    //         storage.liquidity += liquidity_minted;
-    //     }
+        if amount0_fees > 0 {
+            transfer(amount0_fees, storage.token0, sender);
+            storage.reserve0 -= amount0_fees;
+        }
+        if amount1_fees > 0 {
+            transfer(amount1_fees, storage.token1, sender);
+            storage.reserve1 -= amount1_fees;
+        }
+        if (price_lower < current_price || price_lower == current_price) && (current_price < price_upper) {
+            storage.liquidity += liquidity_minted;
+        }
 
-    //     /* nearestTick = Ticks.insert(
-    //         ticks,
-    //         feeGrowthGlobal0,
-    //         feeGrowthGlobal1,
-    //         secondsGrowthGlobal,
-    //         mintParams.lowerOld,
-    //         mintParams.lower,
-    //         mintParams.upperOld,
-    //         mintParams.upper,
-    //         uint128(liquidityMinted),
-    //         nearestTick,
-    //         uint160(currentPrice)
-    //     ); */
+        /* nearestTick = Ticks.insert(
+            ticks,
+            feeGrowthGlobal0,
+            feeGrowthGlobal1,
+            secondsGrowthGlobal,
+            mintParams.lowerOld,
+            mintParams.lower,
+            mintParams.upperOld,
+            mintParams.upper,
+            uint128(liquidityMinted),
+            nearestTick,
+            uint160(currentPrice)
+        ); */
 
-    //     let (amount0_actual, amount1_actual) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_minted, true);
+        let (amount0_actual, amount1_actual) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_minted, true);
 
-    //     //IPositionManager(msg.sender).mintCallback(token0, token1, amount0Actual, amount1Actual, mintParams.native);
+        //IPositionManager(msg.sender).mintCallback(token0, token1, amount0Actual, amount1Actual, mintParams.native);
 
-    //     if amount0_actual != 0 {
-    //         storage.reserve0 += amount0_actual;
-    //         // if (reserve0 > _balance(token0)) revert Token0Missing();
-    //     }
+        if amount0_actual != 0 {
+            storage.reserve0 += amount0_actual;
+            // if (reserve0 > _balance(token0)) revert Token0Missing();
+        }
 
-    //     if amount1_actual != 0 {
-    //         storage.reserve1 += amount1_actual;
-    //         // if (reserve0 > _balance(token0)) revert Token0Missing();
-    //     }
+        if amount1_actual != 0 {
+            storage.reserve1 += amount1_actual;
+            // if (reserve0 > _balance(token0)) revert Token0Missing();
+        }
 
-    //     liquidity_minted
-    // }
+        liquidity_minted
+    }
 
     // #[storage(read, write)]
     // fn burn(lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
@@ -473,19 +474,19 @@ impl ConcentratedLiquidityPool for Contract {
         (amount0, amount1)
     }
 
-    // #[storage(read, write)]
-    // fn collect(tick_lower: I24, tick_upper: I24) -> (u64, u64) {
-    //     let sender: Identity= msg_sender().unwrap();
-    //     let (amount0_fees, amount1_fees) = _update_position(sender, tick_lower, tick_upper, ~U128::from(0,0));
+    #[storage(read, write)]
+    fn collect(tick_lower: I24, tick_upper: I24) -> (u64, u64) {
+        let sender: Identity= msg_sender().unwrap();
+        let (amount0_fees, amount1_fees) = _update_position(sender, tick_lower, tick_upper, ~U128::from(0,0));
 
-    //     storage.reserve0 -= amount0_fees;
-    //     storage.reserve1 -= amount1_fees;
+        storage.reserve0 -= amount0_fees;
+        storage.reserve1 -= amount1_fees;
 
-    //     transfer(amount0_fees, storage.token0, sender);
-    //     transfer(amount1_fees, storage.token1, sender);
+        transfer(amount0_fees, storage.token0, sender);
+        transfer(amount1_fees, storage.token1, sender);
 
-    //     (amount0_fees, amount1_fees)
-    // }
+        (amount0_fees, amount1_fees)
+    }
 
     #[storage(read)]
     fn get_price_and_nearest_tick() -> (Q64x64, I24){
@@ -520,14 +521,14 @@ impl ConcentratedLiquidityPool for Contract {
 //     Result::Ok(())
 // }
 
-// #[storage(read, write)]
-// fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128) -> (u64, u64) {
-//     //let position = storage.positions.get((owner, lower, upper));
+#[storage(read, write)]
+fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128) -> (u64, u64) {
+    //let position = storage.positions.get((owner, lower, upper));
 
-//     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
+    let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
 
-//     (0, 0)
-// }
+    (0, 0)
+}
 // #[storage(read,write)]
 // fn swap(recipient: Address, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64) {
 //     ()
@@ -593,4 +594,311 @@ impl ConcentratedLiquidityPool for Contract {
 //     let fee_growth_inside1 = _fee_growth_global1 - fee_growth_below1 - fee_growth_above1;
 
 //     (fee_growth_inside0, fee_growth_inside1)
+// }
+
+//modulo for I24
+impl core::ops::Mod for I24{
+    fn modulo(self, other: I24) -> I24 {
+        return (self - other * (self / other));
+    }
+}
+
+pub struct Tick {
+    prev_tick: I24,
+    next_tick: I24,
+    liquidity: U128,
+    fee_growth_outside0: u64,
+    fee_growth_outside1: u64,
+    seconds_growth_outside: U128
+}
+
+fn empty_tick() -> Tick {
+    Tick {
+        prev_tick: ~I24::from_uint(0),
+        next_tick: ~I24::from_uint(0),
+        liquidity: ~U128::from(0,0),
+        fee_growth_outside0: 0,
+        fee_growth_outside1: 0,
+        seconds_growth_outside: ~U128::from(0,0)
+    }
+}
+
+// Downcast from u64 to u32, losing precision
+fn u64_to_u32(a: u64) -> u32 {
+    let result: u32 = a;
+    result
+}
+
+//need to create U128 tick cast function in tick_math to clean up implementation
+pub fn max_liquidity(tick_spacing: u32) -> U128 {
+    //max U128 range
+    let max_u128 = ~U128::max();
+
+    //cast max_tick to U128
+    let max_tick_i24 = ~I24::max();
+    let max_tick_u32 = max_tick_i24.abs();
+    let max_tick_u64: u64 = max_tick_u32;
+    let max_tick_u128 = ~U128::from(0, max_tick_u64);
+
+    //cast tick_spacing to U128
+    let tick_spacing_u64: u64 = tick_spacing;
+    let tick_spacing_u128 = ~U128::from(0, tick_spacing_u64);
+
+    //liquidity math
+    let double_tick_spacing = tick_spacing_u128 * ~U128::from(0,2);
+    let range_math = max_u128 / max_tick_u128;
+    let liquidity_math = range_math / double_tick_spacing;
+
+    liquidity_math
+}
+//TODO: do we need read permission?
+// #[storage(read, write)]
+// pub fn tick_cross(
+//     ref mut next: I24, 
+//     seconds_growth_global: U256,
+//     ref mut liquidity: U128,
+//     fee_growth_globalA: U128,
+//     fee_growth_globalB: U128, 
+//     token_zero_to_one: bool,
+//     tick_spacing: I24,
+// ) -> (U128, I24) {
+//     //get seconds_growth from next in StorageMap
+//     let mut stored_tick = ticks.get(next);
+//     let outside_growth = ticks.get(next).seconds_growth_outside;
+
+//     //cast outside_growth into U256
+//     let seconds_growth_outside = ~U256::from(0,0,outside_growth.upper,outside_growth.lower);
+
+//     //do the math, downcast to U128, store in ticks
+//     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
+//     let outside_downcast = ~U128::from(outside_math.c, outside_math.d);
+//     stored_tick.seconds_growth_outside = outside_downcast;
+//     //ticks.insert(next, stored_tick);
+
+//     let modulo_re_to24 = ~I24::from_uint(2);
+//     let i24_zero = ~I24::from_uint(0);
+
+//     if token_zero_to_one {
+//         if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
+//             liquidity -= ticks.get(next).liquidity;
+//         } else{
+//             liquidity += ticks.get(next).liquidity;
+//         }
+//         //cast to U128
+//         let mut new_stored_tick: Tick = ticks.get(next);
+//         let mut fee_g_0_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside0);
+//         let mut fee_g_1_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside1);
+
+//         //do the math
+//         fee_g_0_cast128 = fee_growth_globalB - fee_g_0_cast128;
+//         fee_g_1_cast128 = fee_growth_globalA - fee_g_1_cast128;
+
+//         //downcast to u64
+//         let fee_g_0_cast64: u64 = fee_g_0_cast128.lower;
+//         let fee_g_1_cast64: u64 = fee_g_1_cast128.lower;
+
+//         //push to new_stored_tick
+//         new_stored_tick.fee_growth_outside0 = fee_g_0_cast64;
+//         new_stored_tick.fee_growth_outside1 = fee_g_1_cast64;
+
+//         //push onto storagemap
+//         //ticks.insert(next, new_stored_tick);
+
+//         //change input tick to previous tick
+//         next = ticks.get(next).prev_tick;    
+//     }
+    
+//     else {
+//         if ((next / tick_spacing) % modulo_re_to24) == i24_zero {
+//             liquidity += ticks.get(next).liquidity;
+//         } else{
+//             liquidity -= ticks.get(next).liquidity;
+//         }
+//         //cast to U128
+//         let mut new_stored_tick: Tick = ticks.get(next);
+//         let mut fee_g_0_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside0);
+//         let mut fee_g_1_cast128 = ~U128::from(0, new_stored_tick.fee_growth_outside1);
+
+//         //do the math
+//         fee_g_0_cast128 = fee_growth_globalA - fee_g_0_cast128;
+//         fee_g_1_cast128 = fee_growth_globalB - fee_g_1_cast128;
+
+//         //downcast to u64
+//         let fee_g_0_cast64: u64 = fee_g_0_cast128.lower;
+//         let fee_g_1_cast64: u64 = fee_g_1_cast128.lower;
+
+//         //push to new_stored_tick
+//         new_stored_tick.fee_growth_outside0 = fee_g_0_cast64;
+//         new_stored_tick.fee_growth_outside1 = fee_g_1_cast64;
+
+//         //push onto storagemap
+//         ticks.insert(next, new_stored_tick);
+
+//         //change input tick to previous tick
+//         next = ticks.get(next).prev_tick;
+        
+//     }
+//     (liquidity, next)
+// }
+
+// #[storage(read, write)]
+// fn tick_insert(
+//     fee_growth_global0: u64, fee_growth_global1: u64,  
+//     seconds_growth_global: U128, current_price: Q64x64,
+//     amount: U128,  ref mut nearest: I24,
+//     above: I24, below: I24, 
+//     prev_above: I24, prev_below: I24
+// ) -> I24 {
+//     // check inputs
+//     assert(below < above);
+//     assert(below > MIN_TICK() || below == MIN_TICK());
+//     assert(above < MAX_TICK() || above == MAX_TICK());
+    
+//     let mut below_tick = ticks.get(below);
+
+//     if below_tick.liquidity != ~U128::from(0,0) || below == MIN_TICK() {
+//         // tick has already been initialized
+//         below_tick.liquidity += amount;
+//         ticks.insert(below, below_tick);
+//     } else {
+//         // tick has not been initialized
+//         let mut prev_tick = ticks.get(prev_below);
+//         let prev_next = prev_tick.next_tick;
+        
+//         // check below ordering
+//         assert(prev_tick.liquidity != ~U128::from(0,0) || prev_below == MIN_TICK());
+//         assert(prev_below < below && below < prev_above);
+        
+//         if below < nearest || below == nearest {
+//             ticks.insert(below, Tick {
+//                 prev_tick: prev_below,
+//                 next_tick: prev_next,
+//                 liquidity: amount,
+//                 fee_growth_outside0: fee_growth_global0,
+//                 fee_growth_outside1: fee_growth_global1,
+//                 seconds_growth_outside: seconds_growth_global
+//             });
+//         } else {
+//             ticks.insert(below, Tick {
+//                 prev_tick: prev_below,
+//                 next_tick: prev_next,
+//                 liquidity: amount,
+//                 fee_growth_outside0: 0,
+//                 fee_growth_outside1: 0,
+//                 seconds_growth_outside: ~U128::from(0,0)
+//             });
+//         }
+//         prev_tick.next_tick = below;
+//         ticks.insert(prev_next, prev_tick);
+//     }
+
+//     let mut above_tick = ticks.get(above);
+
+//     if above_tick.liquidity != ~U128::from(0,0) || above == MAX_TICK() {
+//         above_tick.liquidity += amount;
+//         ticks.insert(above, above_tick);
+//     } else {
+//         let mut prev_tick = ticks.get(prev_above);
+//         let mut prev_next = prev_tick.next_tick;
+
+//         // check above order
+//         assert(prev_tick.liquidity != ~U128::from(0,0));
+//         assert(prev_next > above);
+//         assert(prev_above < above);
+
+//         if above < nearest || above == nearest {
+//             ticks.insert(above, Tick {
+//                 prev_tick: prev_above,
+//                 next_tick: prev_next,
+//                 liquidity: amount,
+//                 fee_growth_outside0: fee_growth_global0,
+//                 fee_growth_outside1: fee_growth_global1,
+//                 seconds_growth_outside: seconds_growth_global
+//             });
+//         } else {
+//             ticks.insert(above, Tick {
+//                 prev_tick: prev_above,
+//                 next_tick: prev_next,
+//                 liquidity: amount,
+//                 fee_growth_outside0: 0,
+//                 fee_growth_outside1: 0,
+//                 seconds_growth_outside: ~U128::from(0,0)
+//             });
+//         }
+//         prev_tick.next_tick = above;
+//         ticks.insert(prev_above, prev_tick);
+//         let mut prev_next_tick = ticks.get(prev_next);
+//         prev_next_tick.prev_tick = above;
+//         ticks.insert(prev_next, prev_next_tick);
+//     }
+
+//     let tick_at_price: I24 = get_tick_at_price(current_price);
+
+//     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
+//     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
+    
+//     if above_is_between {
+//         nearest = above;
+//     } else if below_is_between {
+//         nearest = below;
+//     }
+
+//     nearest
+// }
+
+// #[storage(read, write)]
+// fn tick_remove(
+//     below: I24, above: I24,
+//     ref mut nearest: I24,
+//     amount: U128
+// ) -> I24 {
+//     let mut current_tick = ticks.get(below);
+//     let mut prev = current_tick.prev_tick;
+//     let mut next = current_tick.next_tick;
+//     let mut prev_tick = ticks.get(prev);
+//     let mut next_tick = ticks.get(next);
+
+//     if below != MIN_TICK() && current_tick.liquidity == amount {
+//         // clear below tick from storage
+//         prev_tick.next_tick = current_tick.next_tick;
+//         next_tick.prev_tick = current_tick.prev_tick;
+
+//         if nearest == below {
+//             nearest = current_tick.prev_tick;
+//         }
+        
+//         ticks.insert(below, empty_tick());
+//         ticks.insert(prev, prev_tick);
+//         ticks.insert(next, next_tick);
+
+//     } else {
+//         current_tick.liquidity += amount;
+//         ticks.insert(below, current_tick);
+//     }
+
+//     current_tick = ticks.get(above);
+//     prev = current_tick.prev_tick;
+//     next = current_tick.next_tick;
+//     prev_tick = ticks.get(prev);
+//     next_tick = ticks.get(next);
+
+//     if above != MAX_TICK() && current_tick.liquidity == amount {
+//         // clear above tick from storage
+//         prev_tick.next_tick = next;
+//         next_tick.prev_tick = prev;
+
+//         if nearest == above {
+//             nearest = current_tick.prev_tick;
+//         }
+
+//         ticks.insert(above, empty_tick());
+//         ticks.insert(prev, prev_tick);
+//         ticks.insert(next, next_tick);
+
+//     } else {
+//         current_tick.liquidity -= amount;
+//         ticks.insert(above, current_tick);
+//     }
+
+//     nearest
 // }
