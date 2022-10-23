@@ -8,4 +8,3 @@ dep concentrated/Q128x128;
 dep concentrated/swap_lib;
 dep concentrated/tick_delta_math;
 dep concentrated/tick_math;
-dep concentrated/tick;
