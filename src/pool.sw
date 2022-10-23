@@ -121,23 +121,26 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn swap(recipient: Address, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64) -> u64 {
+        
+        // constants
+        let one_e_6_u128 = ~U128::from(0,1000000);
+        let one_e_6_q128x128 = ~Q128x128::from_u128(one_e_6_u128);
+        let one_u128 = ~U128::from(0,1);
+        let zero_u128 = ~U128::from(0,0);
+
         // set local vars
-        let mut fee_amount         = 0;
-        let mut total_fee_amount   = 0;
-        let mut protocol_fee       = 0;
-        let mut fee_growth_global0 = 0;
-        let mut fee_growth_global1 = 0;
+        let mut fee_amount         = zero_u128;
+        let mut total_fee_amount   = zero_u128;
+        let mut protocol_fee       = zero_u128;
+        let mut fee_growth_global0 = zero_u128;
+        let mut fee_growth_global1 = zero_u128;
         let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
         let next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
+        
         // return value
         let mut amount_out = 0;
-
-        let one_e_6_u128 = ~U128::from(0,1000000);
-        let one_e_6_q128x128 = ~Q128X128::from_u128(one_e_6_u128);
-        let one_u128 = ~U128::from(0,1);
-        let zero_u128 = ~U128::from(0,0);
 
         while amount_in_left != zero_u128 {
             let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
@@ -257,31 +260,35 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64 {
-        let mut amount_out_no_fee = (amount_out * 1000000) / (1000000 - storage.swap_fee) + 1;
-        let mut current_price = storage.price;
-        let mut current_liquidity = storage.liquidity;
-        let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(nearest_tick).next_tick };
-        let mut next_tick: I24 = ~I24::new();
-        let tick_spacing = storage.tick_spacing;
-        let swap_fee = ~U128::from_uint(storage.swap_fee);
-
-        let mut final_amount_in: U128 = ~U128::from(0,0);
-        let mut final_amount_out: U128 = ~U128::from(0,amount_out);
-        let mut amount_out_no_fee = ~U128::from(0, amount_out_no_fee);
-
         let one_e_6_u128 = ~U128::from(0,1000000);
         let one_e_6_q128x128 = ~Q128X128::from_u128(one_e_6_u128);
         let one_u128 = ~U128::from(0,1);
         let zero_u128 = ~U128::from(0,0);
 
+        let swap_fee = ~U128::from_uint(storage.swap_fee);
+        let mut amount_out_no_fee = (~U128::from_uint(amount_out) * one_e_6_u128) / (one_e_6_u128 - swap_fee) + one_u128;
+        let mut current_price = storage.price;
+        let mut current_liquidity = storage.liquidity;
+        let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(nearest_tick).next_tick };
+        let mut next_tick: I24 = ~I24::new();
+        let tick_spacing = storage.tick_spacing;
+
+        let mut final_amount_in: U128 = ~U128::from(0,0);
+        let mut final_amount_out: U128 = ~U128::from(0,amount_out);
+        let mut amount_out_no_fee = ~U128::from(0, amount_out_no_fee);
+
+        
+
         while amount_out_no_fee != zero_u128 {
             let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
             if token_zero_to_one {
                 let mut max_dy = get_dy(current_liquidity, next_tick_price, current_price, false);
+                let math_value = ~U128::from(0, 1000000);
+                let one_casted = ~U128::from(0, 1);
                 if amount_out_no_fee < max_dy || amount_out_no_fee == max_dy {
-                    final_amount_out = (final_amount_out * one_e_6_u128) / (one_e_6_u128 - swap_fee) + 1;
+                    final_amount_out = (final_amount_out * one_e_6_u128) / (one_e_6_u128 - swap_fee) + one_u128;
                     let new_price = current_price - mul_div(final_amount_out, U128{upper:0, lower:~u64::max()}, current_liquidity);
-                    final_amount_in += get_dx(current_liquidity, new_price, current_price, false) + 1;
+                    final_amount_in += get_dx(current_liquidity, new_price, current_price, false) + one_casted;
                     break;
                 } else {
                     if next_tick_to_cross / ~I24::from_uint(tick_spacing) % ~I24::from_uint(2) == ~I24::new(){
@@ -289,8 +296,8 @@ impl ConcentratedLiquidityPool for Contract {
                     } else {
                         current_liquidity += storage.ticks.get(next_tick_to_cross).liquidity;
                     }
-                    amount_out_no_fee -= max_dy - 1; // handle rounding issues
-                    let fee_amount = mul_div_rounding_up( max_dy, swap_fee, 1000000);
+                    amount_out_no_fee -= max_dy - one_casted; // handle rounding issues
+                    let fee_amount = mul_div_rounding_up( max_dy, swap_fee, math_value);
                     if final_amount_out < (max_dy - swap_fee) || final_amount_out == (max_dy - swap_fee) {
                         break;
                     }
@@ -300,9 +307,10 @@ impl ConcentratedLiquidityPool for Contract {
                 
             } else {
                 let max_dx = get_dx(current_liquidity, current_price, next_tick_price, false);
-
+                let math_value = ~U128::from(0, 1000000);
+                let one_casted = ~U128::from(0, 1);
                 if amount_out_no_fee < max_dx || amount_out_no_fee == max_dx {
-                    final_amount_out = (final_amount_out * 1000000) / (1000000 - swap_fee) + 1;
+                    final_amount_out = (final_amount_out * math_value) / (math_value - swap_fee) + one_casted;
 
                     let liquidity_padded = ~Q64x64::from(~U128::from(current_liquidity.lower, 0));
                     let mut new_price = mul_div_rounding_up_u256(liquidity_padded, current_price, liquidity_padded - current_price * final_amount_out);
@@ -310,7 +318,7 @@ impl ConcentratedLiquidityPool for Contract {
                     if !(current_price < new_price && (new_price < next_tick_price || new_price == next_tick_price)) {
                         new_price = mul_div_rounding_up_u256(~U256::from(0,1,0,0), liquidity_padded, liquidity_padded / current_price - final_amount_out);
                     }
-                    final_amount_in += get_dy(current_liquidity, current_price, new_price, false) + 1;
+                    final_amount_in += get_dy(current_liquidity, current_price, new_price, false) + one_casted;
                     break;
                 } else {
                     final_amount_in += get_dy(current_liquidity, current_price, next_tick_price, false);
@@ -319,7 +327,7 @@ impl ConcentratedLiquidityPool for Contract {
                     } else {
                         current_liquidity -= storage.ticks.get(next_tick_to_cross).liquidity;
                     }
-                    amount_out_no_fee -= max_dx + 1; // resolve rounding errors
+                    amount_out_no_fee -= max_dx + one_u128; // resolve rounding errors
                     let fee_amount = mul_div_rounding_up(max_dx, swap_fee, one_e_6_u128);
                     if final_amount_out < (max_dx - fee_amount) || final_amount_out == (max_dx - fee_amount){
                         break;
