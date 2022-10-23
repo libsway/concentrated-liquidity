@@ -129,7 +129,7 @@ impl ConcentratedLiquidityPool for Contract {
         let mut fee_growth_global1 = 0;
         let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
-        let mut amount_in_left     = amount;
+        let mut amount_in_left     = ~U128::from(0, amount);
         let next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
         // return value
         let mut amount_out = 0;
@@ -142,7 +142,7 @@ impl ConcentratedLiquidityPool for Contract {
                 // token0 (x) for token1 (y)
                 // decreasing price
                 let max_dx : U128 = get_dx(current_liquidity, next_tick_price, current_price, false);
-                if ~U128::from(0,amount_in_left) <= max_dx {
+                if amount_in_left <= max_dx {
                     //TODO: only represents max u64 in liquidity (max possible is max u128)
                     let liquidity_padded = ~Q128x128::from_u128(current_liquidity);
                     let price_padded     = ~Q128x128::from_u128(current_price);
@@ -150,10 +150,11 @@ impl ConcentratedLiquidityPool for Contract {
                     let mut new_price = mul_div_rounding_up_q64x64(current_liquidity, current_price.value, liquidity_padded + current_price * ~Q64x64::from(U128{upper:0, lower: amount_in_left}));
 
                     if !((next_tick_price < new_price || next_tick_price == new_price) && new_price < current_price) {
+                        let price_cast = ~U128::from(1, 0);
                         new_price = mul_div_rounding_up_q64x64(
-                            ~U128::from(1,0), // TODO someone check this
-                            current_liquidity, 
-                            liquidity_padded / current_price + ~Q128x128::from_uint(amount_in_left)
+                            price_cast,
+                            liquidity_padded, 
+                            liquidity_padded / current_price + ~Q64x64::from(~U128::from(amount_in_left, 0))
                         );
                     }
                     output = get_dy(current_liquidity, new_price, current_price, false);
@@ -171,14 +172,13 @@ impl ConcentratedLiquidityPool for Contract {
                 // token1 (y) for token0 (x)
                 // increasing price
                 let max_dy = get_dy(current_liquidity, current_price, next_tick_price, false);
-
                 if amount_in_left < max_dy || amount_in_left == max_dy {
                     //TODO: what is this constant? :thonk:
                     let new_price = current_price + mul_div(amount_in_left, ~u64::max(), current_liquidity);
 
                     output = get_dx(current_liquidity, current_price, new_price, false);
                     current_price = new_price;
-                    amount_in_left = 0;
+                    amount_in_left = ~U128::from(0, 0);
                 } else {
                     // we need to cross the next tick
                     output = get_dx(current_liquidity, current_price, next_tick_price, false);
@@ -247,9 +247,8 @@ impl ConcentratedLiquidityPool for Contract {
             //transfer token0 amount_out recipient
            // emit Swap(recipient, token1, token0, inAmount, amountOut)
         }
-
-        amount_out
     }
+
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64 {
