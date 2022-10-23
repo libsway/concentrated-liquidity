@@ -143,7 +143,7 @@ impl Q128x128 {
 
     /// Creates Q128x128 that correponds to a unsigned integer
     pub fn from_u128(uint128: U128) -> Self {
-        let value = ~U256::from(uint128.upper, uint.lower, 0, 0);
+        let value = ~U256::from(uint128.upper, uint128.lower, 0, 0);
         Self {
             value
         }
