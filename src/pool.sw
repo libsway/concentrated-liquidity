@@ -254,12 +254,10 @@ impl ConcentratedLiquidityPool for Contract {
             //transfer token0 amount_out recipient
             transfer(amount_out, storage.token0, recipient);
             //emit Swap(recipient, token1, token0, inAmount, amountOut)
-            ()
         } else {
             //transfer token1 amount_out recipient
             transfer(amount_out, storage.token1, recipient);
            // emit Swap(recipient, token1, token0, inAmount, amountOut)
-           ()
         }
 
         amount_out
