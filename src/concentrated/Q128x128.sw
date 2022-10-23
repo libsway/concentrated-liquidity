@@ -1,7 +1,7 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
-dep Q64x64;
+// dep Q64x64;
 dep I24;
 
 use core::num::*;
@@ -14,7 +14,7 @@ use std::{
 };
 
 use I24::*;
-use Q64x64::*;
+// use Q64x64::*;
 
 pub struct Q128x128 {
     value: U256,
@@ -92,7 +92,6 @@ impl core::ops::Divide for Q128x128 {
         }
     }
 }
-
 impl Q128x128 {
     fn insert_sig_bits(ref mut self, msb_idx: u8, log_sig_bits: u64) -> U256 {
         // intiialize vector
@@ -130,16 +129,16 @@ impl Q128x128 {
 impl Q128x128 {
     /// Creates Q128x128 that correponds to a multplied Q64x64
     pub fn from(int: U128, dec: U128) -> Self {
-        let cast256 = ~U256::from(int.upper, int.lower, dec.upper, dec.lower);
+        let value = ~U256::from(int.upper, int.lower, dec.upper, dec.lower);
         Self {
-            value: cast256
+            value
         }
     }
 
-    pub fn from(int: Q64x64) -> Self {
-        let cast256 = ~U256::from(0, int.value.upper, int.value.lower, 0);
+    pub fn from_q64x64(int: U128) -> Self {
+        let value = ~U256::from(0, int.upper, int.lower, 0);
         Self {
-            value: cast256
+            value
         }
     }
 
@@ -170,7 +169,7 @@ impl Q128x128 {
         // take the log base 2 of sig_bits
         let log_sig_bits = log2(sig_bits);
 
-        // reinsert log bits into Q128X128
+        // reinsert log bits into Q128x128
         let log_base2_u256 = self.insert_sig_bits(msb_idx, log_sig_bits);
         let log_base2_q128x128 = Q128x128 { value: log_base2_u256 };
 
@@ -195,7 +194,7 @@ impl Q128x128 {
     }
 }
 
-fn log2(number:u64) -> u64 {
+fn log2(number: u64) -> u64 {
     let two = 2;
     asm(r1: number, r2: 2, r3) {
         mlog r3 r1 r2;

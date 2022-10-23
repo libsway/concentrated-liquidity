@@ -76,13 +76,14 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 //TODO: do we need read permission?
 #[storage(read, write)]
 pub fn tick_cross(
-    ref mut ticks: StorageMap<I24, Tick>,
+    ref ticks: StorageMap<I24, Tick>,
     ref mut next: I24, 
-    fee_growth_time: U256, ref mut liquidity: U128, 
-    seconds_growth_global: U256, fee_growth_globalA: U128,
+    seconds_growth_global: U256,
+    ref mut liquidity: U128,
+    fee_growth_globalA: U128,
     fee_growth_globalB: U128, 
-    tick_spacing: I24, spacing: I24,
-    token_zero_to_one: bool
+    token_zero_to_one: bool,
+    tick_spacing: I24,
 ) -> (U128, I24) {
     //get seconds_growth from next in StorageMap
     let mut stored_tick = ticks.get(next);
@@ -95,7 +96,7 @@ pub fn tick_cross(
     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
     let outside_downcast = ~U128::from(outside_math.c, outside_math.d);
     stored_tick.seconds_growth_outside = outside_downcast;
-    ticks.insert(next, stored_tick);
+    //ticks.insert(next, stored_tick);
 
     let modulo_re_to24 = ~I24::from_uint(2);
     let i24_zero = ~I24::from_uint(0);
@@ -124,7 +125,7 @@ pub fn tick_cross(
         new_stored_tick.fee_growth_outside1 = fee_g_1_cast64;
 
         //push onto storagemap
-        ticks.insert(next, new_stored_tick);
+        //ticks.insert(next, new_stored_tick);
 
         //change input tick to previous tick
         next = ticks.get(next).prev_tick;    
