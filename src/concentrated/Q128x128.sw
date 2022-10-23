@@ -1,6 +1,7 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
+dep Q64x64;
 dep I24;
 
 use core::num::*;
@@ -13,6 +14,7 @@ use std::{
 };
 
 use I24::*;
+use Q64x64::*;
 
 pub struct Q128x128 {
     value: U256,
@@ -49,6 +51,7 @@ impl core::ops::Ord for Q128x128 {
         self.value < other.value
     }
 }
+//TODO: check all basic ops
 impl core::ops::Add for Q128x128 {
     /// Add a Q128x128 to a Q128x128. Panics on overflow.
     fn add(self, other: Self) -> Self {
@@ -128,6 +131,13 @@ impl Q128x128 {
     /// Creates Q128x128 that correponds to a multplied Q64x64
     pub fn from(int: U128, dec: U128) -> Self {
         let cast256 = ~U256::from(int.upper, int.lower, dec.upper, dec.lower);
+        Self {
+            value: cast256
+        }
+    }
+
+    pub fn from(int: Q64x64) -> Self {
+        let cast256 = ~U256::from(0, int.value.upper, int.value.lower, 0);
         Self {
             value: cast256
         }
