@@ -101,7 +101,7 @@ storage {
 
     liquidity: U128 = U128{upper: 0, lower: 0},
 
-    seconds_growth_global: U128 = U128{upper: 0, lower: 0},
+    seconds_growth_global: U256 = U256{a: 0, b: 0, c: 0, d:0},
     last_observation: u32 = 0,
 
     fee_growth_global0: u64 = 0, //Q64x64{value : U128{upper:0,lower:0}},
@@ -147,7 +147,7 @@ impl ConcentratedLiquidityPool for Contract {
         let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
-        let next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
+        let mut next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
         
         // return value
         let mut amount_out = 0;
@@ -220,15 +220,14 @@ impl ConcentratedLiquidityPool for Contract {
                 );
             }
             if cross {
-                let (mut current_liquidity, next_tick_to_cross) = tick_cross(
-                    storage.ticks,
+                let (mut current_liquidity, mut next_tick_to_cross) = tick_cross(
                     next_tick_to_cross,
                     storage.seconds_growth_global,
                     current_liquidity,
                     fee_growth_globalA,
                     fee_growth_globalB,
                     token_zero_to_one,
-                    storage.tick_spacing
+                    ~I24::from(storage.tick_spacing)
                 );
                 if current_liquidity == zero_u128 {
                     // find the next tick with liquidity
@@ -236,12 +235,12 @@ impl ConcentratedLiquidityPool for Contract {
                     let (current_liquidity, next_tick_to_cross) = tick_cross(
                         //storage.ticks,
                         next_tick_to_cross,
-                        seconds_growth_global,
+                        storage.seconds_growth_global,
                         current_liquidity,
                         fee_growth_globalA,
                         fee_growth_globalB,
                         token_zero_to_one,
-                        storage.tick_spacing
+                        ~I24::from(storage.tick_spacing)
                     );
                 }
             }
