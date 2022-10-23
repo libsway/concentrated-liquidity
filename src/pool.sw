@@ -96,8 +96,8 @@ storage {
     seconds_growth_global: U128 = U128{upper: 0, lower: 0},
     last_observation: u32 = 0,
 
-    fee_growth_global0: u64 = 0,
-    fee_growth_global1: u64 = 0,
+    fee_growth_global0: u64 = Q64x64::from_uint(0),
+    fee_growth_global1: u64 = Q64x64::from_uint(0),
 
     bar_fee: u64 = 0,
 
@@ -133,8 +133,8 @@ impl ConcentratedLiquidityPool for Contract {
         let mut fee_amount         = zero_u128;
         let mut total_fee_amount   = zero_u128;
         let mut protocol_fee       = zero_u128;
-        let mut fee_growth_globalA = if token_zero_to_one { storage.fee_growth_global1 } else { storage. fee_growth_global0 };
-        let mut fee_growth_globalB = if token_zero_to_one { storage.fee_growth_global0 } else { storage. fee_growth_global1 };
+        let mut fee_growth_globalA = if token_zero_to_one { ~U128::from_uint(storage.fee_growth_global1) } else { ~U128::from_uint(storage.fee_growth_global0) };
+        let mut fee_growth_globalB = if token_zero_to_one { ~U128::from_uint(storage.fee_growth_global0) } else { ~U128::from_uint(storage.fee_growth_global1) };
         let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
@@ -196,7 +196,7 @@ impl ConcentratedLiquidityPool for Contract {
                     cross = true;
                     amount_in_left -= max_dy;
                 }
-                let mut fee_growth = ~U128::from(0, storage.fee_growth_global0);
+                let mut fee_growth = ~U128::from(0,storage.fee_growth_global0);
 
                 //TODO: bar_fee of 0?
                 let (total_fee_amount, amount_out, protocol_fee, fee_growth_globalA) = handle_fees(
@@ -212,20 +212,20 @@ impl ConcentratedLiquidityPool for Contract {
             }
             if cross {
                 let (current_liquidity, next_tick_to_cross) = tick_cross(
-                    storage.ticks,
+                    //storage.ticks,
                     next_tick_to_cross,
-                    seconds_growth_global,
+                    storage.seconds_growth_global,
                     current_liquidity,
                     fee_growth_globalA,
                     fee_growth_globalB,
                     token_zero_to_one,
-                    tick_spacing
+                    storage.tick_spacing
                 );
-                if current_liquidity == 0 {
+                if current_liquidity == zero_u128 {
                     // find the next tick with liquidity
                     current_price = get_price_sqrt_at_tick(next_tick_to_cross);
                     let (current_liquidity, next_tick_to_cross) = tick_cross(
-                        storage.ticks,
+                        //storage.ticks,
                         next_tick_to_cross,
                         seconds_growth_global,
                         current_liquidity,
@@ -294,7 +294,7 @@ impl ConcentratedLiquidityPool for Contract {
                     let liquidity_padded  = ~Q128x128::from_u128(current_liquidity);
                     let price_padded      = ~Q128x128::from_q64x64(current_price.value);
                     let amount_out_padded = ~Q128x128::from_u128(final_amount_out);
-                    let new_price = current_price - mul_div_rounding_up_q64x64(amount_out_padded, Q128X128::from_uint(~u64::max()), liquidity_padded);
+                    let new_price = current_price - mul_div_rounding_up_q64x64(amount_out_padded, Q128x128::from_uint(~u64::max()), liquidity_padded);
                     final_amount_in += get_dx(current_liquidity, new_price, current_price, false) + one_u128;
                     break;
                 } else {
