@@ -141,6 +141,14 @@ impl Q128x128 {
         }
     }
 
+    /// Creates Q128x128 that correponds to a unsigned integer
+    pub fn from_u128(uint128: U128) -> Self {
+        let value = ~U256::from(uint128.upper, uint.lower, 0, 0);
+        Self {
+            value
+        }
+    }
+
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> I24 {
         // find the most significant bit

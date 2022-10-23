@@ -142,17 +142,18 @@ impl ConcentratedLiquidityPool for Contract {
                 // token0 (x) for token1 (y)
                 // decreasing price
                 let max_dx : U128 = get_dx(current_liquidity, next_tick_price, current_price, false);
-                if U128::from(0,amount_in_left) <= max_dx {
+                if ~U128::from(0,amount_in_left) <= max_dx {
                     //TODO: only represents max u64 in liquidity (max possible is max u128)
-                    let liquidity_padded = Q128x128 { value: ~U256::from(current_liquidity.upper, current_liquidity.lower, 0, 0) };
+                    let liquidity_padded = ~Q128x128::from_u128(current_liquidity);
+                    let price_padded     = ~Q128x128::from_u128(current_price);
                     //TODO: needs to be converted to a Q64x64
                     let mut new_price = mul_div_rounding_up_q64x64(current_liquidity, current_price.value, liquidity_padded + current_price * ~Q64x64::from(U128{upper:0, lower: amount_in_left}));
 
                     if !((next_tick_price < new_price || next_tick_price == new_price) && new_price < current_price) {
                         new_price = mul_div_rounding_up_q64x64(
                             ~U128::from(1,0), // TODO someone check this
-                            liquidity_padded, 
-                            liquidity_padded / current_price + ~Q64x64::from(~U128::from(amount_in_left, 0))
+                            current_liquidity, 
+                            liquidity_padded / current_price + ~Q128x128::from_uint(amount_in_left)
                         );
                     }
                     output = get_dy(current_liquidity, new_price, current_price, false);
