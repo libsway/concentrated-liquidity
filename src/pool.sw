@@ -412,6 +412,12 @@ impl ConcentratedLiquidityPool for Contract {
             uint160(currentPrice)
         ); */
 
+        storage.nearest_tick = tick_insert(
+            liquidity_minted,
+            upper, lower,
+            upper_old, lower_old
+        )
+
         let (amount0_actual, amount1_actual) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_minted, true);
 
         //IPositionManager(msg.sender).mintCallback(token0, token1, amount0Actual, amount1Actual, mintParams.native);
@@ -553,7 +559,13 @@ fn _update_fees(token_zero_to_one: bool, fee_growth_global: u64, protocol_fee: u
 #[storage(read, write)]
 fn _update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
 
-    ()
+    if token_zero_to_one  {
+        storage.reserve0 += amount_in;
+        storage.reserve1 -= amount_out;
+    } else {
+        storage.reserve1 += amount_in;
+        storage.reserve0 -= amount_out;
+    }
 }
 
 #[storage(read)]
@@ -654,7 +666,7 @@ pub fn tick_cross(
     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;
     let outside_downcast = ~U128::from(outside_math.c, outside_math.d);
     stored_tick.seconds_growth_outside = outside_downcast;
-    //storage.ticks.insert(next, stored_tick);
+    storage.ticks.insert(next, stored_tick);
 
     let modulo_re_to24 = ~I24::from_uint(2);
     let i24_zero = ~I24::from_uint(0);
@@ -724,9 +736,7 @@ pub fn tick_cross(
 
 #[storage(read, write)]
 fn tick_insert(
-    fee_growth_global0: u64, fee_growth_global1: u64,  
-    seconds_growth_global: U128, current_price: Q64x64,
-    amount: U128,  ref mut nearest: I24,
+    amount: U128,
     above: I24, below: I24, 
     prev_above: I24, prev_below: I24
 ) -> I24 {
@@ -736,6 +746,7 @@ fn tick_insert(
     assert(above < MAX_TICK() || above == MAX_TICK());
     
     let mut below_tick = storage.ticks.get(below);
+    let mut nearest = storage.nearest_tick;
 
     if below_tick.liquidity != ~U128::from(0,0) || below == MIN_TICK() {
         // tick has already been initialized
@@ -755,9 +766,9 @@ fn tick_insert(
                 prev_tick: prev_below,
                 next_tick: prev_next,
                 liquidity: amount,
-                fee_growth_outside0: fee_growth_global0,
-                fee_growth_outside1: fee_growth_global1,
-                seconds_growth_outside: seconds_growth_global
+                fee_growth_outside0: storage.fee_growth_global0,
+                fee_growth_outside1: storage.fee_growth_global1,
+                seconds_growth_outside: storage.seconds_growth_global
             });
         } else {
             storage.ticks.insert(below, Tick {
@@ -792,9 +803,9 @@ fn tick_insert(
                 prev_tick: prev_above,
                 next_tick: prev_next,
                 liquidity: amount,
-                fee_growth_outside0: fee_growth_global0,
-                fee_growth_outside1: fee_growth_global1,
-                seconds_growth_outside: seconds_growth_global
+                fee_growth_outside0: storage.fee_growth_global0,
+                fee_growth_outside1: storage.fee_growth_global1,
+                seconds_growth_outside: storage.seconds_growth_global
             });
         } else {
             storage.ticks.insert(above, Tick {
@@ -813,7 +824,7 @@ fn tick_insert(
         storage.ticks.insert(prev_next, prev_next_tick);
     }
 
-    let tick_at_price: I24 = get_tick_at_price(current_price);
+    let tick_at_price: I24 = get_tick_at_price(storage.price);
 
     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
@@ -823,7 +834,7 @@ fn tick_insert(
     } else if below_is_between {
         nearest = below;
     }
-
+    
     nearest
 }
 
