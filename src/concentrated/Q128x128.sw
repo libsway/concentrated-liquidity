@@ -187,7 +187,7 @@ impl Q128x128 {
             return ~I24::from_uint(log_base2_value.value.b);
         } else {
             log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            return ~I24::neg_from(log_base2_value.value.b);
+            return ~I24::from_neg(log_base2_value.value.b);
         }
         //TODO: throw exception
         ~I24::from_uint(0)

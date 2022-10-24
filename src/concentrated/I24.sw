@@ -90,7 +90,7 @@ impl I24 {
         32
     }
     /// Helper function to get a negative value of unsigned numbers
-    pub fn neg_from(value: u32) -> Self {
+    pub fn from_neg(value: u32) -> Self {
         Self {
             underlying: ~Self::indent() - value,
         }
@@ -109,7 +109,7 @@ impl core::ops::Mod for I24 {
         if (self.underlying > ~Self::indent() && other.underlying > ~Self::indent()) || (self.underlying < ~Self::indent() && other.underlying < ~Self::indent()) {
             return ~I24::from_uint(remainder);
         } else {
-            return ~I24::neg_from(remainder);
+            return ~I24::from_neg(remainder);
         }
     }
 }

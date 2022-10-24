@@ -276,11 +276,11 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64 {
-        let one_e_6_u128 = ~U128::from(0,1000000);
+        let zero_u128        = ~U128::from(0,0);
+        let one_u128         = ~U128::from(0,1);
+        let one_e_6_u128     = ~U128::from(0,1000000);
+        let one_q128x128     = ~Q128x128::from_uint(1);
         let one_e_6_q128x128 = ~Q128x128::from_u128(one_e_6_u128);
-        let one_u128 = ~U128::from(0,1);
-        let one_q128x128 = ~Q128x128::from_uint(1);
-        let zero_u128 = ~U128::from(0,0);
 
         let swap_fee = ~U128::from(0,storage.swap_fee);
         let mut amount_out_no_fee = (~U128::from(0,amount_out) * one_e_6_u128) / (one_e_6_u128 - swap_fee) + one_u128;
