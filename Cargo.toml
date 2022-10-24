@@ -1,0 +1,16 @@
+[package]
+name = "Exeguttor_Tests"
+description = "A testing harness for running tests for the Exeguttor AMM and its libraries"
+version = "0.1.0"
+edition = "2021"
+authors = ["ControlCplusControlV"]
+license = "Apache-2.0"
+
+[dev-dependencies]
+fuels = { version = "0.25", features = ["fuel-core-lib"] }
+tokio = { version = "1.12", features = ["rt", "macros"] }
+
+[[test]]
+harness = true
+name = "integration_tests"
+path = "tests/harness.rs"

@@ -1,0 +1,8 @@
+[project]
+# This project is to hold all the tests for the Exeggutor AMM
+authors = ["ControlCplusControlV"]
+entry = "main.sw"
+license = "Apache-2.0"
+name = "tests"
+
+[dependencies]
