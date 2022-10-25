@@ -5,4 +5,3 @@ license = "GPL-3.0"
 name = "amm"
 
 [dependencies]
-std = { path = "../sway/sway-lib-std" }
