@@ -39,6 +39,47 @@ pub enum ConcentratedLiquidityErrors {
     Overflow: (),
 }
 
+struct InitializeEvent {
+
+}
+
+struct SwapEvent {
+    pool: ContractId,
+    sender: Address,
+    recipient: Address,
+    token0_amount: u64,
+    token1_amount: u64,
+    liquidity: U128,
+    tick: I24,
+    sqrt_price: Q64x64
+}
+
+struct MintEvent {
+    pool: ContractId,
+    sender: Address,
+    recipient: Address,
+    token0_amount: u64,
+    token1_amount: u64,
+    liquidity_minted: U128,
+    tick_lower: I24,
+    tick_upper: I24
+}
+
+struct BurnEvent {
+    pool: ContractId,
+    sender: Address,
+    token0_amount: u64,
+    token1_amount: u64,
+    liquidity_burned: U128,
+    tick_lower: I24,
+    tick_upper: I24
+}
+
+struct FlashEvent {
+    fee_growth_global0: u64,
+    fee_growth_global1: u64
+}
+
 struct Position {
     liquidity: U128,
     fee_growth_inside0: u64,
@@ -57,10 +98,13 @@ struct Tick {
 abi ConcentratedLiquidityPool {
     // Core functions
     #[storage(read, write)]
+    fn init(token0: ContractId, token1: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32);
+
+    #[storage(read, write)]
     fn set_price(price : Q64x64);
 
     #[storage(read, write)]
-    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128;
+    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64, recipient: Identity) -> U128;
 
     #[storage(read, write)]
     fn collect(tickLower: I24, tickUpper: I24) -> (u64, u64);
@@ -69,7 +113,7 @@ abi ConcentratedLiquidityPool {
     fn burn(lower: I24, upper: I24, amount: U128) -> (u64, u64, u64, u64);
 
     #[storage(read, write)]
-    fn swap(recipient: Identity, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64) -> u64;
+    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64;
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64;
@@ -128,8 +172,32 @@ storage {
 
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
-    fn swap(recipient: Identity, token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64) -> u64 {
-        
+    fn init(token0: ContractId, token1: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
+        assert(price == 0);
+        //TODO: assert lexographical order
+        storage.token0 = token0;
+        storage.token1 = token1;
+        //TODO: _ensure_tick_spacing
+        storage.tick = get_tick_at_price(sqrt_price);
+        storage.price = sqrt_price;
+        storage.protocol_fee = 0;
+        storage.swap_fee = swap_fee;
+        storage.tick_spacing = tick_spacing;
+        unlocked = true;
+
+        log(InitEvent {
+            pool: std::context::call_frames::contract_id(),
+            fee: storage.swap_fee
+            tick: storage.tick,
+            sqrt_price: storage.price,
+            token0: storage.liquidity,
+            tick: storage.nearest_tick,
+            sqrt_price: storage.price
+        });
+    }
+    #[storage(read, write)]
+    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64 {
+        //TODO: check msg_asset_id() and msg_amount()
         // constants
         let one_e_6_u128 = ~U128::from(0,1000000);
         let one_e_6_q128x128 = ~Q128x128::from_u128(one_e_6_u128);
@@ -254,10 +322,10 @@ impl ConcentratedLiquidityPool for Contract {
             storage.nearest_tick = new_nearest_tick;
             storage.liquidity = current_liquidity;
         }
-
+        // handle case where not all liquidity is used
         let amount_in = amount;
 
-        _update_reserves(token_zero_to_one, amount_in, amount_out);
+        _swap_update_reserves(token_zero_to_one, amount_in, amount_out);
         _update_fees(token_zero_to_one, fee_growth_globalA.lower, protocol_fee.lower);
 
         if token_zero_to_one {
@@ -269,6 +337,15 @@ impl ConcentratedLiquidityPool for Contract {
             transfer(amount_out, storage.token1, recipient);
            // emit Swap(recipient, token1, token0, inAmount, amountOut)
         }
+
+        log(SwapEvent {
+            pool: std::context::call_frames::contract_id(),
+            token0_amount: amount_in,
+            token1_amount: amount_out,
+            liquidity: storage.liquidity,
+            tick: storage.nearest_tick,
+            sqrt_price: storage.price
+        });
 
         amount_out
     }
@@ -371,7 +448,7 @@ impl ConcentratedLiquidityPool for Contract {
     }
 
     #[storage(read, write)]
-    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64) -> U128 {
+    fn mint(lower_old: I24, lower: I24, upper_old: I24, upper: I24, amount0_desired: u64, amount1_desired: u64, recipient: Identity) -> U128 {
         _ensure_tick_spacing(upper, lower).unwrap();
 
         let price_lower = get_price_sqrt_at_tick(lower);
@@ -382,9 +459,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
-        let sender: Identity= msg_sender().unwrap();
-
-        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_minted);
+        let (amount0_fees, amount1_fees) = _update_position(recipient, lower, upper, liquidity_minted);
 
         if amount0_fees > 0 {
             transfer(amount0_fees, storage.token0, sender);
@@ -398,45 +473,35 @@ impl ConcentratedLiquidityPool for Contract {
             storage.liquidity += liquidity_minted;
         }
 
-        /* nearestTick = Ticks.insert(
-            ticks,
-            feeGrowthGlobal0,
-            feeGrowthGlobal1,
-            secondsGrowthGlobal,
-            mintParams.lowerOld,
-            mintParams.lower,
-            mintParams.upperOld,
-            mintParams.upper,
-            uint128(liquidityMinted),
-            nearestTick,
-            uint160(currentPrice)
-        ); */
-
         storage.nearest_tick = tick_insert(
             liquidity_minted,
             upper, lower,
             upper_old, lower_old
-        )
+        );
 
         let (amount0_actual, amount1_actual) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_minted, true);
 
         //IPositionManager(msg.sender).mintCallback(token0, token1, amount0Actual, amount1Actual, mintParams.native);
+        _position_update_reserves(true, amount0_actual, amount1_actual);
 
-        if amount0_actual != 0 {
-            storage.reserve0 += amount0_actual;
-            // if (reserve0 > _balance(token0)) revert Token0Missing();
-        }
+        let sender: Identity= msg_sender().unwrap();
 
-        if amount1_actual != 0 {
-            storage.reserve1 += amount1_actual;
-            // if (reserve0 > _balance(token0)) revert Token0Missing();
-        }
+        log(MintEvent {
+            pool: std::context::call_frames::contract_id(),
+            sender,
+            recipient,
+            token0_amount: amount0_desired,
+            token1_amount: amount1_desired,
+            liquidity_minted,
+            tick_lower,
+            tick_upper,
+        });
 
         liquidity_minted
     }
 
     #[storage(read, write)]
-    fn burn(lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
+    fn burn(recipient: Address, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
         let current_price = storage.price;
@@ -456,11 +521,20 @@ impl ConcentratedLiquidityPool for Contract {
         let amount0:u64 = token0_amount + amount0_fees;
         let amount1:u64 = token1_amount + amount1_fees;
 
-        storage.reserve0 -= amount0;
-        storage.reserve1 -= amount1;
+        _position_update_reserves(false, amount0, amount1);
 
         transfer(amount0, storage.token0, sender);
         transfer(amount1, storage.token1, sender);
+
+        log(BurnEvent {
+            pool: std::context::call_frames::contract_id(),
+            sender,
+            token0_amount: amount0_desired,
+            token1_amount: amount1_desired,
+            liquidity_burned: liquidity_amount,
+            tick_lower,
+            tick_upper
+        });
 
         // nearestTick = Ticks.remove(ticks, lower, upper, amount, nearestTick);
         //TODO: get fee growth in range and calculate fees based on liquidity
@@ -557,7 +631,7 @@ fn _update_fees(token_zero_to_one: bool, fee_growth_global: u64, protocol_fee: u
 }
 
 #[storage(read, write)]
-fn _update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
+fn _swap_update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
 
     if token_zero_to_one  {
         storage.reserve0 += amount_in;
@@ -565,6 +639,18 @@ fn _update_reserves(token_zero_to_one: bool, amount_in: u64, amount_out: u64) {
     } else {
         storage.reserve1 += amount_in;
         storage.reserve0 -= amount_out;
+    }
+}
+
+#[storage(read, write)]
+fn _position_update_reserves(add_liquidity: bool, token0_amount: u64, token1_amount: u64) {
+
+    if add_liquidity {
+        storage.reserve0 += token0_amount;
+        storage.reserve1 += token1_amount;
+    } else {
+        storage.reserve0 -= token0_amount;
+        storage.reserve1 -= token1_amount;
     }
 }
 
