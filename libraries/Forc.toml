@@ -1,0 +1,7 @@
+[project]
+authors = ["ControlCplusControlV"]
+entry = "cl_libs.sw"
+license = "Apache-2.0"
+name = "cl_libs"
+
+[dependencies]
