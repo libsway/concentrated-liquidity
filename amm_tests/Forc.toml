@@ -6,4 +6,4 @@ license = "Apache-2.0"
 name = "tests"
 
 [dependencies]
-amm = { path = "../amm/" }
+cl_libs = { path = "../libraries/" }

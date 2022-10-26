@@ -5,3 +5,4 @@ license = "GPL-3.0"
 name = "amm"
 
 [dependencies]
+cl_libs = { path = "../libraries/" }

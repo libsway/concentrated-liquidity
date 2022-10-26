@@ -1,7 +1,5 @@
 contract;
 
-dep cl_libs;
-
 use core::num::*;
 use std::{
     revert::require,
