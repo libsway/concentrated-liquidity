@@ -1,14 +1,21 @@
 [[package]]
 name = 'amm'
 source = 'root'
+dependencies = [
+    'cl_libs',
+    'std',
+]
+
+[[package]]
+name = 'cl_libs'
+source = 'path+from-root-78008370C3B04E1D'
 dependencies = ['std']
 
 [[package]]
 name = 'core'
-source = 'path+from-root-78008370C3B04E1D'
-dependencies = []
+source = 'path+from-root-064254D1F5F62D46'
 
 [[package]]
 name = 'std'
-source = 'path+from-root-78008370C3B04E1D'
+source = 'git+https://github.com/fuellabs/sway?tag=v0.28.1#84f9aad376760cd9c8eacc8a4848bffeb25bf9a5'
 dependencies = ['core']
