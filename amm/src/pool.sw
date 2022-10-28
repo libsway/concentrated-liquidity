@@ -39,8 +39,13 @@ pub enum ConcentratedLiquidityErrors {
     Overflow: (),
 }
 
-struct InitializeEvent {
-
+struct InitEvent {
+    pool_id: Address
+    token0: Address,
+    token1: Address,
+    swap_fee: u64,
+    tick_spacing: u32,
+    init_price: Q64x64
 }
 
 struct SwapEvent {
@@ -186,13 +191,12 @@ impl ConcentratedLiquidityPool for Contract {
         unlocked = true;
 
         log(InitEvent {
-            pool: std::context::call_frames::contract_id(),
-            fee: storage.swap_fee
-            tick: storage.tick,
-            sqrt_price: storage.price,
-            token0: storage.liquidity,
-            tick: storage.nearest_tick,
-            sqrt_price: storage.price
+            pool_id: std::context::call_frames::contract_id(),
+            token0: storage.token0,
+            token1: storage.token1,
+            swap_fee: storage.swap_fee,
+            tick_spacing: storage.nearest_tick,
+            init_price: storage.price
         });
     }
     #[storage(read, write)]
