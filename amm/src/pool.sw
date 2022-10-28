@@ -1,7 +1,5 @@
 contract;
 
-dep cl_libs;
-
 use core::num::*;
 use std::{
     revert::require,
@@ -520,7 +518,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_amount);
 
-         let (token0_amount, token1_amount) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_amount, false);
+        let (token0_amount, token1_amount) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_amount, false);
 
         let amount0:u64 = token0_amount + amount0_fees;
         let amount1:u64 = token1_amount + amount1_fees;
@@ -858,7 +856,7 @@ fn tick_insert(
                 liquidity: amount,
                 fee_growth_outside0: storage.fee_growth_global0,
                 fee_growth_outside1: storage.fee_growth_global1,
-                seconds_growth_outside: storage.seconds_growth_global
+                seconds_growth_outside: U128{upper:storage.seconds_growth_global.c, lower:storage.seconds_growth_global.d},
             });
         } else {
             storage.ticks.insert(below, Tick {
@@ -895,7 +893,7 @@ fn tick_insert(
                 liquidity: amount,
                 fee_growth_outside0: storage.fee_growth_global0,
                 fee_growth_outside1: storage.fee_growth_global1,
-                seconds_growth_outside: storage.seconds_growth_global
+                seconds_growth_outside: U128{upper:storage.seconds_growth_global.c, lower:storage.seconds_growth_global.d},
             });
         } else {
             storage.ticks.insert(above, Tick {
