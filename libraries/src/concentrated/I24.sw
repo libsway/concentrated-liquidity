@@ -10,7 +10,6 @@ pub struct I24 {
     underlying: u32,
 }
 
-
 pub trait From {
     /// Function for creating I24 from u32
     fn from(underlying: u32) -> Self;
@@ -19,9 +18,12 @@ pub trait From {
 impl From for I24 {
     /// Helper function to get a signed number from with an underlying
     fn from(underlying: u32) -> Self {
+        assert(underlying < 16777216);
         Self { underlying }
     }
 }
+
+// Main math and comparison Ops
 
 impl core::ops::Eq for I24 {
     fn eq(self, other: Self) -> bool {
@@ -41,7 +43,10 @@ impl core::ops::Ord for I24 {
 impl I24 {
     /// The underlying value that corresponds to zero signed value
     pub fn indent() -> u32 {
-        2147483648u32
+        // With 24 bits max value that can be expressed is 16,777,215
+        // i24 required values are from −8,388,608 to 8,388,607
+        // So zero value must be 8,388,608 to cover the full range
+        8388608u32
     }
 }
 
@@ -49,9 +54,6 @@ impl I24 {
     // Return the underlying value
     pub fn into(self) -> u32 {
         self.underlying
-    }
-    pub fn flip(self) -> u32 {
-        ~Self::indent() - self.underlying
     }
 }
 
@@ -75,19 +77,21 @@ impl I24 {
     }
     /// The smallest value that can be represented by this integer type.
     pub fn min() -> Self {
+        // Return 0u32 which is actually −8,388,608
         Self {
-            underlying: ~u32::min(),
+            underlying: 0,
         }
     }
     /// The largest value that can be represented by this type,
     pub fn max() -> Self {
+        // Return max 24-bit number which is actually 8,388,607
         Self {
-            underlying: ~u32::max(),
+            underlying: 16777215,
         }
     }
     /// The size of this type in bits.
     pub fn bits() -> u32 {
-        32
+        24
     }
     /// Helper function to get a negative value of unsigned numbers
     pub fn from_neg(value: u32) -> Self {
@@ -99,6 +103,7 @@ impl I24 {
     pub fn from_uint(value: u32) -> Self {
         // as the minimal value of I24 is 2147483648 (1 << 31) we should add ~I24::indent() (1 << 31) 
         let underlying: u32 = value + ~Self::indent();
+        assert(underlying < 16777216);
         Self { underlying }
     }
 }
@@ -117,7 +122,7 @@ impl core::ops::Mod for I24 {
 impl core::ops::Add for I24 {
     /// Add a I24 to a I24. Panics on overflow.
     fn add(self, other: Self) -> Self {
-        // subtract 1 << 31 to avoid double move
+        // subtract 1 << 24 to avoid a double move, then from will perform the overflow check
         ~Self::from(self.underlying - ~Self::indent() + other.underlying)
     }
 }
@@ -158,6 +163,10 @@ impl core::ops::Multiply for I24 {
         {
             res = ~Self::from(~Self::indent() - (other.underlying - ~Self::indent()) * (~Self::indent() - self.underlying));
         }
+
+        // Overflow protection
+        assert((res < ~Self::max()) || (res == ~Self::max()));
+
         res
     }
 }

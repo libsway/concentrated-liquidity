@@ -12,6 +12,7 @@ use std::{
     token::transfer,
     result::*,
     chain::auth::*,
+    logging::log,
 };
 
 use cl_libs::I24::*;
@@ -38,18 +39,18 @@ pub enum ConcentratedLiquidityErrors {
 }
 
 struct InitEvent {
-    pool_id: Address
-    token0: Address,
-    token1: Address,
+    pool_id: ContractId,
+    token0: ContractId,
+    token1: ContractId,
     swap_fee: u64,
-    tick_spacing: u32,
+    tick_spacing: I24,
     init_price: Q64x64
 }
 
 struct SwapEvent {
     pool: ContractId,
-    sender: Address,
-    recipient: Address,
+    sender: Identity,
+    recipient: Identity,
     token0_amount: u64,
     token1_amount: u64,
     liquidity: U128,
@@ -59,8 +60,8 @@ struct SwapEvent {
 
 struct MintEvent {
     pool: ContractId,
-    sender: Address,
-    recipient: Address,
+    sender: Identity,
+    recipient: Identity,
     token0_amount: u64,
     token1_amount: u64,
     liquidity_minted: U128,
@@ -70,7 +71,7 @@ struct MintEvent {
 
 struct BurnEvent {
     pool: ContractId,
-    sender: Address,
+    sender: Identity,
     token0_amount: u64,
     token1_amount: u64,
     liquidity_burned: U128,
@@ -113,7 +114,7 @@ abi ConcentratedLiquidityPool {
     fn collect(tickLower: I24, tickUpper: I24) -> (u64, u64);
 
     #[storage(read, write)]
-    fn burn(lower: I24, upper: I24, amount: U128) -> (u64, u64, u64, u64);
+    fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64);
 
     #[storage(read, write)]
     fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64;
@@ -176,17 +177,16 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(token0: ContractId, token1: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(price == 0);
+        assert(storage.price == Q64x64{value: U128{upper:0,lower:0}});
         //TODO: assert lexographical order
         storage.token0 = token0;
         storage.token1 = token1;
         //TODO: _ensure_tick_spacing
-        storage.tick = get_tick_at_price(sqrt_price);
+        storage.nearest_tick = get_tick_at_price(sqrt_price);
         storage.price = sqrt_price;
-        storage.protocol_fee = 0;
         storage.swap_fee = swap_fee;
         storage.tick_spacing = tick_spacing;
-        unlocked = true;
+        storage.unlocked = true;
 
         log(InitEvent {
             pool_id: std::context::call_frames::contract_id(),
@@ -340,13 +340,17 @@ impl ConcentratedLiquidityPool for Contract {
            // emit Swap(recipient, token1, token0, inAmount, amountOut)
         }
 
+        let sender: Identity= msg_sender().unwrap();
+
         log(SwapEvent {
             pool: std::context::call_frames::contract_id(),
             token0_amount: amount_in,
             token1_amount: amount_out,
             liquidity: storage.liquidity,
             tick: storage.nearest_tick,
-            sqrt_price: storage.price
+            sqrt_price: storage.price,
+            recipient,
+            sender
         });
 
         amount_out
@@ -463,6 +467,8 @@ impl ConcentratedLiquidityPool for Contract {
 
         let (amount0_fees, amount1_fees) = _update_position(recipient, lower, upper, liquidity_minted);
 
+        let sender: Identity= msg_sender().unwrap();
+
         if amount0_fees > 0 {
             transfer(amount0_fees, storage.token0, sender);
             storage.reserve0 -= amount0_fees;
@@ -495,15 +501,15 @@ impl ConcentratedLiquidityPool for Contract {
             token0_amount: amount0_desired,
             token1_amount: amount1_desired,
             liquidity_minted,
-            tick_lower,
-            tick_upper,
+            tick_lower:lower,
+            tick_upper:upper,
         });
 
         liquidity_minted
     }
 
     #[storage(read, write)]
-    fn burn(recipient: Address, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
+    fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
         let current_price = storage.price;
@@ -531,11 +537,11 @@ impl ConcentratedLiquidityPool for Contract {
         log(BurnEvent {
             pool: std::context::call_frames::contract_id(),
             sender,
-            token0_amount: amount0_desired,
-            token1_amount: amount1_desired,
+            token0_amount,
+            token1_amount,
             liquidity_burned: liquidity_amount,
-            tick_lower,
-            tick_upper
+            tick_lower:lower,
+            tick_upper:upper,
         });
 
         // nearestTick = Ticks.remove(ticks, lower, upper, amount, nearestTick);
