@@ -6,13 +6,13 @@ abigen!(
 );
 
 #[tokio::test]
-async fn can_call_test_function() {
+async fn i24_test_bits() {
     let wallet = launch_provider_and_get_wallet().await;
 
     let (contract_instance, _id) = get_test_contract_instance(wallet).await;
 
     let result = contract_instance.methods()
-        .test_thing()
+        .test_bits()
             .call()
             .await
             .unwrap()
@@ -20,6 +20,39 @@ async fn can_call_test_function() {
 
     assert!(result);
 }
+
+#[tokio::test]
+async fn i24_test_indent() {
+    let wallet = launch_provider_and_get_wallet().await;
+
+    let (contract_instance, _id) = get_test_contract_instance(wallet).await;
+
+    let result = contract_instance.methods()
+        .test_indent()
+            .call()
+            .await
+            .unwrap()
+            .value;
+
+    assert!(result);
+}
+
+#[tokio::test]
+async fn i24_max_indent() {
+    let wallet = launch_provider_and_get_wallet().await;
+
+    let (contract_instance, _id) = get_test_contract_instance(wallet).await;
+
+    let result = contract_instance.methods()
+        .test_max()
+            .call()
+            .await
+            .unwrap()
+            .value;
+
+    assert!(result);
+}
+
 
 async fn get_test_contract_instance(
     wallet: WalletUnlocked,
