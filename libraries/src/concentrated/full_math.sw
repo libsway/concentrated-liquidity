@@ -97,6 +97,15 @@ pub fn mul_div_rounding_up_u256(base: U256, factor: U128, denominator: U128) -> 
     res_128
 }
 
+pub fn mul_div_q64x64(base: Q128x128, factor: Q128x128, denominator: Q128x128) -> Q64x64 {
+    let mut res: Q128x128 = (base * factor) / denominator;
+    if (res.value.a != 0) || (res.value.b != 0) {
+        // panic on overflow
+        revert(0);
+    }
+    ~Q64x64::from(~U128::from(res.value.b, res.value.c))
+}
+
 pub fn mul_div_rounding_up_q64x64(base: Q128x128, factor: Q128x128, denominator: Q128x128) -> Q64x64 {
     let mut res: Q128x128 = (base * factor) / denominator;
     if res * denominator != base * factor {

@@ -82,22 +82,22 @@ struct BurnEvent {
 }
 
 struct FlashEvent {
-    fee_growth_global0: u64,
-    fee_growth_global1: u64
+    fee_growth_global0: Q64x64,
+    fee_growth_global1: Q64x64
 }
 
 struct Position {
     liquidity: U128,
-    fee_growth_inside0: u64,
-    fee_growth_inside1: u64,
+    fee_growth_inside0: Q64x64,
+    fee_growth_inside1: Q64x64,
 }
 
 struct Tick {
     prev_tick: I24,
     next_tick: I24,
     liquidity: U128,
-    fee_growth_outside0: u64,
-    fee_growth_outside1: u64,
+    fee_growth_outside0: Q64x64,
+    fee_growth_outside1: Q64x64,
     seconds_growth_outside: U128
 }
 
@@ -146,18 +146,14 @@ storage {
     max_fee: u32 = 100000,
     tick_spacing: u32 = 10, // implicitly a u24
     swap_fee: u32 = 2500,
-    
-    //bar_fee_to: Identity = (),
 
     liquidity: U128 = U128{upper: 0, lower: 0},
 
     seconds_growth_global: U256 = U256{a: 0, b: 0, c: 0, d:0},
     last_observation: u32 = 0,
 
-    fee_growth_global0: u64 = 0, //Q64x64{value : U128{upper:0,lower:0}},
-    fee_growth_global1: u64 = 0, // Q64x64{value : U128{upper:0,lower:0}},
-
-    bar_fee: u64 = 0,
+    fee_growth_global0: Q64x64 = Q64x64{value : U128{upper:0,lower:0}},
+    fee_growth_global1: Q64x64 = Q64x64{value : U128{upper:0,lower:0}},
 
     token0_protocol_fee: u64 = 0,
     token1_protocol_fee: u64 = 0,
@@ -281,11 +277,9 @@ impl ConcentratedLiquidityPool for Contract {
                 }
                 let mut fee_growth = ~U128::from(0,storage.fee_growth_global0);
 
-                //TODO: bar_fee of 0?
                 let (total_fee_amount, amount_out, protocol_fee, fee_growth_globalA) = handle_fees(
                     output.lower,
                     storage.swap_fee,
-                    0,
                     current_liquidity,
                     total_fee_amount.lower,
                     amount_out,
@@ -561,13 +555,12 @@ impl ConcentratedLiquidityPool for Contract {
             amount0 = storage.token0_protocol_fee;
             storage.token0_protocol_fee = 0;
             storage.reserve0 -= amount0;
-            //transfer(amount0, storage.token0, storage.bar_fee_to)
+
         }
         if storage.token1_protocol_fee > 1 {
             amount1 = storage.token0_protocol_fee;
             storage.token1_protocol_fee = 0;
             storage.reserve1 -= amount1;
-            //transfer(amount1, storage.token1, storage.bar_fee_to)
         }
 
         (amount0, amount1)
