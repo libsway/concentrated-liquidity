@@ -39,12 +39,13 @@ pub enum ConcentratedLiquidityErrors {
 }
 
 struct InitEvent {
-    pool_id: ContractId,
+    pool_id: ContractId
     token0: ContractId,
     token1: ContractId,
     swap_fee: u64,
-    tick_spacing: I24,
+    tick_spacing: u32,
     init_price: Q64x64
+    init_tick: u32
 }
 
 struct SwapEvent {
@@ -194,7 +195,9 @@ impl ConcentratedLiquidityPool for Contract {
             token1: storage.token1,
             swap_fee: storage.swap_fee,
             tick_spacing: storage.nearest_tick,
-            init_price: storage.price
+            init_price_upper: sqrt_price.value.upper,
+            init_price_lower: sqrt_price.value.lower
+            init_tick: storage.nearest_tick
         });
     }
     #[storage(read, write)]
