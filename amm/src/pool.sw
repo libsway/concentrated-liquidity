@@ -669,10 +669,10 @@ fn range_fee_growth(lower_tick : I24, upper_tick: I24) -> (u64, u64) {
     let _fee_growth_global0 = storage.fee_growth_global0;
     let _fee_growth_global1 = storage.fee_growth_global1;
 
-    let mut fee_growth_below0:u64 = 0;
-    let mut fee_growth_below1:u64 = 0;
-    let mut fee_growth_above0:u64 = 0;
-    let mut fee_growth_above1:u64 = 0;
+    let mut fee_growth_below0:Q64x64 = ~Q64x64::from_uint(0);
+    let mut fee_growth_below1:Q64x64 = ~Q64x64::from_uint(0);
+    let mut fee_growth_above0:Q64x64 = ~Q64x64::from_uint(0);
+    let mut fee_growth_above1:Q64x64 = ~Q64x64::from_uint(0);
 
     if lower_tick < current_tick || lower_tick == current_tick {
         fee_growth_below0 = lower.fee_growth_outside0;
