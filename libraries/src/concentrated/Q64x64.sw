@@ -39,6 +39,12 @@ impl Q64x64 {
     pub fn bits() -> u32 {
         128
     }
+    pub fn integer_bits() -> u32 {
+        64
+    }
+    pub fn decimal_bits() -> u32 {
+        64
+    }
 }
 impl U128 {
     fn ge(self, other: Self) -> bool {
@@ -81,34 +87,22 @@ impl core::ops::Subtract for Q64x64 {
 }
 impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
+    //TODO: does U256 do overflow check??
     fn multiply(self, other: Self) -> Q128x128 {
-        let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
-        let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
-        return ~Q128x128::from(int_u128, dec_u128);
+        let int = ~U256::from(0, self.value.upper, self.value.lower, 0) * ~U256::from(0, other.value.upper, 0, 0);
+        let dec = ~U256::from(0, self.value.upper, self.value.lower, 0) * ~U256::from(0, 0, other.value.lower, 0) >> 64;
+        return ~Q128x128::from_u256(int + dec);
     }
 }
 impl core::ops::Divide for Q64x64 {
     /// Divide a Q64x64 by a Q64x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        let zero = ~Q64x64::zero();
-        assert(divisor != zero);
-        let denominator = ~U256::from(0, 0, 0, ~Self::denominator());
-        // Conversion to U128 done to ensure no overflow happen
-        // and maximal precision is avaliable
-        // as it makes possible to multiply by the denominator in 
-        // all cases
-        let self_u128 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-        let divisor_u128 = ~U256::from(0, 0, divisor.value.upper, divisor.value.lower);
-
-        // Multiply by denominator to ensure accuracy 
-        let res_u256 = self_u128 * denominator / divisor_u128;
-        if res_u256.b != 0 || res_u256.a != 0 {
-            // panic on overflow
-            revert(0);
-        }
-        let res_u128 = ~U128::from(res_u256.c, res_u256.d);
+        let int = ~U256::from(0, self.value.upper, self.value.lower, 0) / ~U256::from(0, divisor.value.upper, 0, 0);
+        let dec = ~U256::from(0, self.value.upper, self.value.lower, 0) / ~U256::from(0, 0, divisor.value.lower, 0) << 64;
+        let value_u256 = int + dec;
+        let value_u128 = ~U128::from(value_u256.b, value_u256.c);
         Self {
-            value: res_u128,
+            value: value_u128
         }
     }
 }
@@ -116,7 +110,7 @@ impl core::ops::Mod for U128 {
     /// Modulo of a U128 by a U128. Panics if divisor is zero.
     fn modulo(self, divisor: Self) -> Self {
         let zero = ~U128::from(0, 0);
-        let one = ~U128::from(0, 1);
+        let one =  ~U128::from(0, 1);
         assert(divisor != zero);
         let mut quotient = ~U128::new();
         let mut remainder = ~U128::new();
