@@ -24,7 +24,7 @@ use cl_libs::full_math::*;
 use cl_libs::swap_lib::*;
 
 //TODO: implement these in pool.sw
-pub enum PoolErrors {
+pub enum ConcentratedLiquidityPoolErrors {
     Locked: (),
     ZeroAddress: (),
     InvalidToken: (),
@@ -172,7 +172,7 @@ storage {
     reserve1: u64 = 0,
 
     // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
+    sqrt_price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
     
     nearest_tick: I24 = I24 { underlying: 2147483648u32}, // Zero
 
@@ -186,10 +186,10 @@ impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(first_token: ContractId, second_token: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
         assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
-        assert(swap_fee <= max_fee);
-        assert(token0 != token1);
-        let storage.token0 = if first_token < second_token { first_token }  else { second_token };
-        let storage.token1 = if first_token < second_token { second_token } else { first_token };
+        assert(swap_fee <= storage.max_fee);
+        assert(first_token != second_token);
+        storage.token0 = if first_token < second_token { first_token }  else { second_token };
+        storage.token1 = if first_token < second_token { second_token } else { first_token };
         storage.nearest_tick = get_tick_at_price(sqrt_price);
         storage.sqrt_price = sqrt_price;
         storage.swap_fee = swap_fee;
@@ -605,18 +605,18 @@ impl ConcentratedLiquidityPool for Contract {
     }
 }
 #[storage(read)]
-fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityErrors> {
+fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityPoolErrors> {
     if lower % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
+        return Result::Err(ConcentratedLiquidityPoolErrors::InvalidTick);
     }
     if (lower / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::LowerEven);
+        return Result::Err(ConcentratedLiquidityPoolErrors::LowerEven);
     }
     if upper % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
+        return Result::Err(ConcentratedLiquidityPoolErrors::InvalidTick);
     }
     if (upper / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) == ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::UpperOdd);
+        return Result::Err(ConcentratedLiquidityPoolErrors::UpperOdd);
     }
 
     Result::Ok(())
@@ -744,7 +744,6 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 
     liquidity_math
 }
-//TODO: do we need read permission?
 #[storage(read, write)]
 pub fn tick_cross(
     ref mut next: I24, 

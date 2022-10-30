@@ -51,7 +51,6 @@ impl core::ops::Ord for Q128x128 {
         self.value < other.value
     }
 }
-//TODO: check all basic ops
 impl core::ops::Add for Q128x128 {
     /// Add a Q128x128 to a Q128x128. Panics on overflow.
     fn add(self, other: Self) -> Self {
