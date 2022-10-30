@@ -71,24 +71,22 @@ impl core::ops::Subtract for Q128x128 {
     }
 }
 impl core::ops::Multiply for Q128x128 {
-    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
-    fn multiply(self, other: Self) -> Self {
-        // If trying to subtract a larger number, panic.
-        let res = self.value * other.value;
-        // need some check
+    /// Nultiply a Q128x128 by a Q128x128. Panics of overflow.
+    fn multiply(self, other: Self) -> Q128x128 {
+        let int = self.value * ~U256::from(other.value.a, other.value.b, 0, 0);
+        let dec = self.value * ~U256::from(0, 0, other.value.c, other.value.d) >> 128;
         Self {
-            value: res,
+            value: int + dec
         }
     }
 }
 impl core::ops::Divide for Q128x128 {
-    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
-    fn divide(self, other: Self) -> Self {
-        // If trying to subtract a larger number, panic.
-        let res = self.value / other.value;
-        // need some check
+    /// Divide a Q128x128 by a Q128x128. Panics if divisor is zero.
+    fn divide(self, divisor: Self) -> Self {
+        let int = self.value / ~U256::from(divisor.value.a, divisor.value.b, 0, 0);
+        let dec = self.value / ~U256::from(0, 0, divisor.value.c, divisor.value.d) << 128;
         Self {
-            value: res,
+            value: int + dec
         }
     }
 }
@@ -153,6 +151,14 @@ impl Q128x128 {
     /// Creates Q128x128 that correponds to a unsigned integer
     pub fn from_u128(uint128: U128) -> Self {
         let value = ~U256::from(uint128.upper, uint128.lower, 0, 0);
+        Self {
+            value
+        }
+    }
+
+    /// Creates Q128x128 that correponds to a unsigned integer
+    pub fn from_u256(uint256: U256) -> Self {
+        let value = uint256;
         Self {
             value
         }

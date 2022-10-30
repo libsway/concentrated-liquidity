@@ -211,13 +211,12 @@ impl ConcentratedLiquidityPool for Contract {
         let mut fee_amount         = zero_u128;
         let mut total_fee_amount   = zero_u128;
         let mut protocol_fee       = zero_u128;
-        // TODO this declaration for fee growth is wrong
-        let mut fee_growth_globalA  = if token_zero_to_one { storage.fee_growth_global1 } else { storage.fee_growth_global0 };
+        let mut fee_growth_globalA = if token_zero_to_one { storage.fee_growth_global1 } else { storage.fee_growth_global0 };
         let mut fee_growth_globalB = if token_zero_to_one { storage.fee_growth_global0 } else { storage.fee_growth_global1 };
         let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
-        let mut next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
+        let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
         
         // return value
         let mut amount_out = 0;
@@ -231,11 +230,9 @@ impl ConcentratedLiquidityPool for Contract {
                 // decreasing price
                 let max_dx : U128 = get_dx(current_liquidity, next_tick_price, current_price, false);
                 if amount_in_left <= max_dx {
-                    //TODO: only represents max u64 in liquidity (max possible is max u128)
                     let liquidity_padded = ~Q128x128::from_u128(current_liquidity);
                     let price_padded     = ~Q128x128::from_q64x64(current_price.value);
                     let amount_in_padded = ~Q128x128::from_u128(amount_in_left);
-                    //TODO: needs to be converted to a Q64x64
                     let mut new_price : Q64x64 = mul_div_rounding_up_q64x64(liquidity_padded, price_padded, liquidity_padded + price_padded * amount_in_padded);
 
                     if !((next_tick_price < new_price || next_tick_price == new_price) && new_price < current_price) {
@@ -262,9 +259,8 @@ impl ConcentratedLiquidityPool for Contract {
                 // increasing price
                 let max_dy = get_dy(current_liquidity, current_price, next_tick_price, false);
                 if amount_in_left < max_dy || amount_in_left == max_dy {
-                    //TODO: what is this constant? :thonk:
+                    //TODO: what is this ~u64::max() constant for?
                     let new_price = current_price + Q64x64{ value : mul_div(amount_in_left, ~U128::from(0, ~u64::max()), current_liquidity)};
-
                     output = get_dx(current_liquidity, current_price, new_price, false);
                     current_price = new_price;
                     amount_in_left = ~U128::from(0, 0);
@@ -284,7 +280,7 @@ impl ConcentratedLiquidityPool for Contract {
                     total_fee_amount.lower,
                     amount_out,
                     protocol_fee.lower,
-                    fee_growth // TODO I think this is right
+                    fee_growth
                 );
             }
             if cross {
@@ -328,22 +324,25 @@ impl ConcentratedLiquidityPool for Contract {
         _swap_update_reserves(token_zero_to_one, amount_in, amount_out);
         _update_fees(token_zero_to_one, fee_growth_globalA, protocol_fee.lower);
 
+        let mut token0_amount = 0;
+        let mut token1_amount = 0;
+
         if token_zero_to_one {
-            //transfer token0 amount_out recipient
             transfer(amount_out, storage.token0, recipient);
-            //emit Swap(recipient, token1, token0, inAmount, amountOut)
+            token0_amount = amount_in;
+            token1_amount = amount_out;
         } else {
-            //transfer token1 amount_out recipient
             transfer(amount_out, storage.token1, recipient);
-           // emit Swap(recipient, token1, token0, inAmount, amountOut)
+            token1_amount = amount_in;
+            token0_amount = amount_out;
         }
 
         let sender: Identity= msg_sender().unwrap();
 
         log(SwapEvent {
             pool: std::context::call_frames::contract_id(),
-            token0_amount: amount_in,
-            token1_amount: amount_out,
+            token0_amount,
+            token1_amount,
             liquidity: storage.liquidity,
             tick: storage.nearest_tick,
             sqrt_price: storage.price,
