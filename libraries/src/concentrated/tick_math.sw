@@ -196,7 +196,6 @@ pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     return ~Q64x64::from(~U128::from(price.b, price.c));
 }
 
-//TODO: call once at deployment time
 pub fn MIN_SQRT_PRICE() -> Q64x64 {
     Q64x64 { value : ~U128::from(0,0)}
 }

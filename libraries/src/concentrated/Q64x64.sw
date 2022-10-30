@@ -87,7 +87,6 @@ impl core::ops::Subtract for Q64x64 {
 }
 impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
-    //TODO: does U256 do overflow check??
     fn multiply(self, other: Self) -> Q128x128 {
         let int = ~U256::from(0, self.value.upper, self.value.lower, 0) * ~U256::from(0, other.value.upper, 0, 0);
         let dec = ~U256::from(0, self.value.upper, self.value.lower, 0) * ~U256::from(0, 0, other.value.lower, 0) >> 64;

@@ -23,7 +23,8 @@ use cl_libs::tick_math::*;
 use cl_libs::full_math::*;
 use cl_libs::swap_lib::*;
 
-pub enum ConcentratedLiquidityErrors {
+//TODO: implement these in pool.sw
+pub enum ConcentratedLiquidityPoolErrors {
     Locked: (),
     ZeroAddress: (),
     InvalidToken: (),
@@ -36,6 +37,15 @@ pub enum ConcentratedLiquidityErrors {
     UpperOdd: (),
     MaxTickLiquidity: (),
     Overflow: (),
+}
+
+impl core::ops::Ord for ContractId {
+    fn lt(self, other: Self) -> bool {
+        self.value < other.value
+    }
+    fn gt(self, other: Self) -> bool {
+        self.value > other.value
+    }
 }
 
 struct InitEvent {
@@ -162,7 +172,7 @@ storage {
     reserve1: u64 = 0,
 
     // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
+    sqrt_price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
     
     nearest_tick: I24 = I24 { underlying: 2147483648u32}, // Zero
 
@@ -174,14 +184,14 @@ storage {
 
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
-    fn init(token0: ContractId, token1: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(storage.price == Q64x64{value: U128{upper:0,lower:0}});
-        //TODO: assert lexographical order
-        storage.token0 = token0;
-        storage.token1 = token1;
-        //TODO: _ensure_tick_spacing
+    fn init(first_token: ContractId, second_token: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
+        assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
+        assert(swap_fee <= storage.max_fee);
+        assert(first_token != second_token);
+        storage.token0 = if first_token < second_token { first_token }  else { second_token };
+        storage.token1 = if first_token < second_token { second_token } else { first_token };
         storage.nearest_tick = get_tick_at_price(sqrt_price);
-        storage.price = sqrt_price;
+        storage.sqrt_price = sqrt_price;
         storage.swap_fee = swap_fee;
         storage.tick_spacing = tick_spacing;
         storage.unlocked = true;
@@ -198,7 +208,7 @@ impl ConcentratedLiquidityPool for Contract {
         });
     }
     #[storage(read, write)]
-    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64 {
+    fn swap(token_zero_to_one: bool, amount: u64, sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
         //TODO: check msg_asset_id() and msg_amount()
         // constants
         let one_e_6_u128 = ~U128::from(0,1000000);
@@ -213,7 +223,7 @@ impl ConcentratedLiquidityPool for Contract {
         let mut protocol_fee       = zero_u128;
         let mut fee_growth_globalA = if token_zero_to_one { storage.fee_growth_global1 } else { storage.fee_growth_global0 };
         let mut fee_growth_globalB = if token_zero_to_one { storage.fee_growth_global0 } else { storage.fee_growth_global1 };
-        let mut current_price      = storage.price;
+        let mut current_price      = storage.sqrt_price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
         let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
@@ -297,7 +307,6 @@ impl ConcentratedLiquidityPool for Contract {
                     // find the next tick with liquidity
                     current_price = get_price_sqrt_at_tick(next_tick_to_cross);
                     let (current_liquidity, next_tick_to_cross) = tick_cross(
-                        //storage.ticks,
                         next_tick_to_cross,
                         storage.seconds_growth_global,
                         current_liquidity,
@@ -310,7 +319,7 @@ impl ConcentratedLiquidityPool for Contract {
             }
         }
 
-        storage.price = current_price;
+        storage.sqrt_price = current_price;
 
         let new_nearest_tick = if token_zero_to_one { next_tick_to_cross } else { storage.ticks.get(next_tick_to_cross).prev_tick };
 
@@ -345,7 +354,7 @@ impl ConcentratedLiquidityPool for Contract {
             token1_amount,
             liquidity: storage.liquidity,
             tick: storage.nearest_tick,
-            sqrt_price: storage.price,
+            sqrt_price: storage.sqrt_price,
             recipient,
             sender
         });
@@ -364,7 +373,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         let swap_fee = ~U128::from(0,storage.swap_fee);
         let mut amount_out_no_fee = (~U128::from(0,amount_out) * one_e_6_u128) / (one_e_6_u128 - swap_fee) + one_u128;
-        let mut current_price = storage.price;
+        let mut current_price = storage.sqrt_price;
         let mut current_liquidity = storage.liquidity;
         let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
         let mut next_tick: I24 = ~I24::new();
@@ -432,7 +441,7 @@ impl ConcentratedLiquidityPool for Contract {
                 }
             }
             current_price = next_tick_price;
-            assert(next_tick_to_cross != next_tick); // check for insufficient output liquidity
+            assert(next_tick_to_cross != next_tick);
             next_tick_to_cross = next_tick;
         }
          
@@ -443,8 +452,8 @@ impl ConcentratedLiquidityPool for Contract {
     fn set_price(price : Q64x64) {
         check_sqrt_price_bounds(price);
         let zero_price = Q64x64{ value: ~U128::from(0,0) };
-        if storage.price == zero_price {
-            storage.price = price;
+        if storage.sqrt_price == zero_price {
+            storage.sqrt_price = price;
         }
 
         ()
@@ -456,7 +465,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
-        let current_price = storage.price;
+        let current_price = storage.sqrt_price;
 
         let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, ~U128::from(0, amount1_desired), ~U128::from(0, amount0_desired));
 
@@ -509,7 +518,7 @@ impl ConcentratedLiquidityPool for Contract {
     fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
-        let current_price = storage.price;
+        let current_price = storage.sqrt_price;
 
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
@@ -542,7 +551,8 @@ impl ConcentratedLiquidityPool for Contract {
         });
 
         // nearestTick = Ticks.remove(ticks, lower, upper, amount, nearestTick);
-        //TODO: get fee growth in range and calculate fees based on liquidity
+        // only remove if there is no other liquidity present
+        //TODO:
         (token0_amount, token1_amount, 0, 0)
     }
 
@@ -581,7 +591,7 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read)]
     fn get_price_and_nearest_tick() -> (Q64x64, I24){
-        (storage.price, storage.nearest_tick)
+        (storage.sqrt_price, storage.nearest_tick)
     }
 
     #[storage(read)]
@@ -595,18 +605,18 @@ impl ConcentratedLiquidityPool for Contract {
     }
 }
 #[storage(read)]
-fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityErrors> {
+fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquidityPoolErrors> {
     if lower % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
+        return Result::Err(ConcentratedLiquidityPoolErrors::InvalidTick);
     }
     if (lower / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::LowerEven);
+        return Result::Err(ConcentratedLiquidityPoolErrors::LowerEven);
     }
     if upper % ~I24::from_uint(storage.tick_spacing) != ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::InvalidTick);
+        return Result::Err(ConcentratedLiquidityPoolErrors::InvalidTick);
     }
     if (upper / ~I24::from_uint(storage.tick_spacing)) % ~I24::from_uint(2) == ~I24::from_uint(0) {
-        return Result::Err(ConcentratedLiquidityErrors::UpperOdd);
+        return Result::Err(ConcentratedLiquidityPoolErrors::UpperOdd);
     }
 
     Result::Ok(())
@@ -734,7 +744,6 @@ pub fn max_liquidity(tick_spacing: u32) -> U128 {
 
     liquidity_math
 }
-//TODO: do we need read permission?
 #[storage(read, write)]
 pub fn tick_cross(
     ref mut next: I24, 
@@ -897,7 +906,7 @@ fn tick_insert(
         storage.ticks.insert(prev_next, prev_next_tick);
     }
 
-    let tick_at_price: I24 = get_tick_at_price(storage.price);
+    let tick_at_price: I24 = get_tick_at_price(storage.sqrt_price);
 
     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
