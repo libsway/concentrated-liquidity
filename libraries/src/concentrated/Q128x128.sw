@@ -184,18 +184,16 @@ impl Q128x128 {
 
         // log2(10^128) = 8 * log2(10^16)
         let log_base2_1_q128x128 = Q128x128 { value: ~U256::from(0, 0, 0, log_base2_max_u64 * 8) };
+        let mut tick_index: I24 = ~I24::from_uint(0);
 
-        let mut log_base2_value = Q128x128 { value: ~U256::from(0, 0, 0, 0) };
-        //TODO: should we round up to nearest tick?
         if log_base2_q128x128 > log_base2_1_q128x128 {
-            log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
-            return ~I24::from_uint(log_base2_value.value.b);
+            let log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
+            tick_index = ~I24::from_uint(log_base2_value.value.b);
         } else {
-            log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            return ~I24::from_neg(log_base2_value.value.b);
+            let log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
+            tick_index =  ~I24::from_neg(log_base2_value.value.b);
         }
-        //TODO: throw exception
-        ~I24::from_uint(0)
+        tick_index
     }
 }
 
