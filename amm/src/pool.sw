@@ -13,6 +13,10 @@ use std::{
     result::*,
     chain::auth::*,
     logging::log,
+    context::{
+        call_frames::msg_asset_id,
+        msg_amount,
+    },
 };
 
 use cl_libs::I24::*;
@@ -129,7 +133,7 @@ abi ConcentratedLiquidityPool {
     fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64);
 
     #[storage(read, write)]
-    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64;
+    fn swap(sprtPriceLimit: Q64x64, recipient: Identity) -> u64;
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64;
@@ -208,8 +212,15 @@ impl ConcentratedLiquidityPool for Contract {
         });
     }
     #[storage(read, write)]
-    fn swap(token_zero_to_one: bool, amount: u64, sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
-        //TODO: check msg_asset_id() and msg_amount()
+    fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
+
+        let token0 = storage.token0;
+        let token1 = storage.token1;
+        assert(msg_amount() > 0);
+        assert(msg_asset_id() == token0 || msg_asset_id() == token1);
+        let amount = msg_amount();
+        let token_zero_to_one = if msg_asset_id() == token0 { true } else { false };
+
         // constants
         let one_e_6_u128 = ~U128::from(0,1000000);
         let one_e_6_q128x128 = ~Q128x128::from_u128(one_e_6_u128);
@@ -230,7 +241,7 @@ impl ConcentratedLiquidityPool for Contract {
         
         // return value
         let mut amount_out = 0;
-
+        // handle next_tick == 0
         while amount_in_left != zero_u128 {
             let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
             let mut output: U128 = zero_u128;
@@ -337,11 +348,11 @@ impl ConcentratedLiquidityPool for Contract {
         let mut token1_amount = 0;
 
         if token_zero_to_one {
-            transfer(amount_out, storage.token0, recipient);
+            transfer(amount_out, token0, recipient);
             token0_amount = amount_in;
             token1_amount = amount_out;
         } else {
-            transfer(amount_out, storage.token1, recipient);
+            transfer(amount_out, token1, recipient);
             token1_amount = amount_in;
             token0_amount = amount_out;
         }
