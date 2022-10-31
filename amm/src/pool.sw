@@ -245,7 +245,7 @@ impl ConcentratedLiquidityPool for Contract {
         
         // return value
         let mut amount_out = 0;
-
+        // handle next_tick == 0
         while amount_in_left != zero_u128 {
             let next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
             let mut next_price = next_tick_price;
@@ -346,7 +346,7 @@ impl ConcentratedLiquidityPool for Contract {
             storage.liquidity = current_liquidity;
         }
         // handle case where not all liquidity is used
-        let amount_in = amount;
+        let amount_in = amount - amount_in_left;
 
         _swap_update_reserves(token_zero_to_one, amount_in, amount_out);
         _update_fees(token_zero_to_one, fee_growth_globalA, protocol_fee.lower);
@@ -354,17 +354,19 @@ impl ConcentratedLiquidityPool for Contract {
         let mut token0_amount = 0;
         let mut token1_amount = 0;
 
+        let sender: Identity= msg_sender().unwrap();
+
         if token_zero_to_one {
-            transfer(amount_out, storage.token0, recipient);
+            if amount_in_left > 0 transfer(amount_in_left, token0, sender);
+            transfer(amount_out, token0, recipient);
             token0_amount = amount_in;
             token1_amount = amount_out;
         } else {
-            transfer(amount_out, storage.token1, recipient);
+            if amount_in_left > 0 transfer(amount_in_left, token1, sender);
+            transfer(amount_out, token1, recipient);
             token1_amount = amount_in;
             token0_amount = amount_out;
         }
-
-        let sender: Identity= msg_sender().unwrap();
 
         log(SwapEvent {
             pool: std::context::call_frames::contract_id(),
