@@ -650,7 +650,7 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 #[storage(read, write)]
 fn _update_position(owner: Identity, lower: I24, upper: I24, amount: U128, add_liquidity: bool) -> (u64, u64) {
     let mut position = storage.positions.get((owner, lower, upper));
-    assert(amount <= position.liquidity);
+    assert(add_liquidity || amount <= position.liquidity);
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
     
     let amount0_fees = 
