@@ -13,6 +13,10 @@ use std::{
     result::*,
     chain::auth::*,
     logging::log,
+    context::{
+        call_frames::msg_asset_id,
+        msg_amount,
+    },
 };
 
 use cl_libs::I24::*;
@@ -119,7 +123,7 @@ abi ConcentratedLiquidityPool {
     fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64);
 
     #[storage(read, write)]
-    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64;
+    fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64;
 
     #[storage(read)]
     fn quote_amount_in(token_zero_to_one: bool, amount_out: u64) -> u64;
@@ -166,7 +170,7 @@ storage {
     reserve1: u64 = 0,
 
     // Orginally Sqrt of price aka. √(y/x), multiplied by 2^64.
-    price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
+    sqrt_price: Q64x64 = Q64x64{value : U128{upper:0,lower:0}}, 
     
     nearest_tick: I24 = I24 { underlying: 2147483648u32}, // Zero
 
@@ -179,13 +183,13 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(token0: ContractId, token1: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(storage.price == Q64x64{value: U128{upper:0,lower:0}});
+        assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
         //TODO: assert lexographical order
         storage.token0 = token0;
         storage.token1 = token1;
         //TODO: _ensure_tick_spacing
         storage.nearest_tick = get_tick_at_price(sqrt_price);
-        storage.price = sqrt_price;
+        storage.sqrt_price = sqrt_price;
         storage.swap_fee = swap_fee;
         storage.tick_spacing = tick_spacing;
         storage.unlocked = true;
@@ -202,8 +206,19 @@ impl ConcentratedLiquidityPool for Contract {
         });
     }
     #[storage(read, write)]
-    fn swap(token_zero_to_one: bool, amount: u64, sprtPriceLimit: Q64x64, recipient: Identity) -> u64 {
-        //TODO: check msg_asset_id() and msg_amount()
+    fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
+
+        // sanity checks
+        assert(msg_amount() > 0);
+        let token0 = storage.token0;
+        let token1 = storage.token1;
+        assert(msg_asset_id() == token0 || msg_asset_id() == token1);
+        let amount = msg_amount();
+        let token_zero_to_one = if msg_asset_id() == token0 { true } else { false };
+        let mut current_price = storage.sqrt_price;
+        if token_zero_to_one { assert(current_price < sqrt_price_limit) }
+        else                 { assert(current_price > sqrt_price_limit) }
+
         // constants
         let one_e_6_u128 = ~U128::from(0,1000000);
         let one_e_6_q128x128 = ~Q128x128::from_u128(one_e_6_u128);
@@ -218,7 +233,6 @@ impl ConcentratedLiquidityPool for Contract {
         // TODO this declaration for fee growth is wrong
         let mut fee_growth_globalA = if token_zero_to_one { U128{upper:0, lower: storage.fee_growth_global1} } else {U128{upper:0, lower: storage.fee_growth_global0} };
         let mut fee_growth_globalB = if token_zero_to_one { U128{upper:0, lower: storage.fee_growth_global0} } else { U128{upper:0, lower: storage.fee_growth_global1} };
-        let mut current_price      = storage.price;
         let mut current_liquidity  = storage.liquidity;
         let mut amount_in_left     = ~U128::from(0, amount);
         let mut next_tick_to_cross     = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
@@ -227,13 +241,15 @@ impl ConcentratedLiquidityPool for Contract {
         let mut amount_out = 0;
 
         while amount_in_left != zero_u128 {
-            let mut next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
+            let next_tick_price = get_price_sqrt_at_tick(next_tick_to_cross);
+            let mut next_price = next_tick_price;
             let mut output: U128 = zero_u128;
             let mut cross = false;
             if token_zero_to_one {
                 // token0 (x) for token1 (y)
                 // decreasing price
-                let max_dx : U128 = get_dx(current_liquidity, next_tick_price, current_price, false);
+                if next_price < sqrt_price_limit { next_price = sqrt_price_limit }
+                let max_dx : U128 = get_dx(current_liquidity, next_price, current_price, false);
                 if amount_in_left <= max_dx {
                     //TODO: only represents max u64 in liquidity (max possible is max u128)
                     let liquidity_padded = ~Q128x128::from_u128(current_liquidity);
@@ -242,7 +258,7 @@ impl ConcentratedLiquidityPool for Contract {
                     //TODO: needs to be converted to a Q64x64
                     let mut new_price : Q64x64 = mul_div_rounding_up_q64x64(liquidity_padded, price_padded, liquidity_padded + price_padded * amount_in_padded);
 
-                    if !((next_tick_price < new_price || next_tick_price == new_price) && new_price < current_price) {
+                    if !((next_price < new_price || next_price == new_price) && new_price < current_price) {
                         let price_cast = ~U128::from(1, 0);
                         new_price = mul_div_rounding_up_q64x64(
                             one_q128x128,
@@ -255,16 +271,17 @@ impl ConcentratedLiquidityPool for Contract {
                     amount_in_left = zero_u128;
                 } else {
                     // we need to cross the next tick
-                    output = get_dy(current_liquidity, next_tick_price, current_price, false);
-                    current_price = next_tick_price;
-                    cross = true;
+                    output = get_dy(current_liquidity, next_price, current_price, false);
+                    current_price = next_price;
+                    if next_price == next_tick_price { cross = true } else { break }
                     amount_in_left -= max_dx;
                 }
             }
             else {
                 // token1 (y) for token0 (x)
                 // increasing price
-                let max_dy = get_dy(current_liquidity, current_price, next_tick_price, false);
+                if next_price > sqrt_price_limit { next_price = sqrt_price_limit }
+                let max_dy = get_dy(current_liquidity, current_price, next_price, false);
                 if amount_in_left < max_dy || amount_in_left == max_dy {
                     //TODO: what is this constant? :thonk:
                     let new_price = current_price + Q64x64{ value : mul_div(amount_in_left, ~U128::from(0, ~u64::max()), current_liquidity)};
@@ -274,9 +291,9 @@ impl ConcentratedLiquidityPool for Contract {
                     amount_in_left = ~U128::from(0, 0);
                 } else {
                     // we need to cross the next tick
-                    output = get_dx(current_liquidity, current_price, next_tick_price, false);
-                    current_price = next_tick_price;
-                    cross = true;
+                    output = get_dx(current_liquidity, current_price, next_price, false);
+                    current_price = next_price;
+                    if next_price == next_tick_price { cross = true } else { break }
                     amount_in_left -= max_dy;
                 }
                 let mut fee_growth = ~U128::from(0,storage.fee_growth_global0);
@@ -320,7 +337,7 @@ impl ConcentratedLiquidityPool for Contract {
             }
         }
 
-        storage.price = current_price;
+        storage.sqrt_price = current_price;
 
         let new_nearest_tick = if token_zero_to_one { next_tick_to_cross } else { storage.ticks.get(next_tick_to_cross).prev_tick };
 
@@ -352,7 +369,7 @@ impl ConcentratedLiquidityPool for Contract {
             token1_amount: amount_out,
             liquidity: storage.liquidity,
             tick: storage.nearest_tick,
-            sqrt_price: storage.price,
+            sqrt_price: storage.sqrt_price,
             recipient,
             sender
         });
@@ -371,7 +388,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         let swap_fee = ~U128::from(0,storage.swap_fee);
         let mut amount_out_no_fee = (~U128::from(0,amount_out) * one_e_6_u128) / (one_e_6_u128 - swap_fee) + one_u128;
-        let mut current_price = storage.price;
+        let mut current_price = storage.sqrt_price;
         let mut current_liquidity = storage.liquidity;
         let mut next_tick_to_cross = if token_zero_to_one { storage.nearest_tick } else { storage.ticks.get(storage.nearest_tick).next_tick };
         let mut next_tick: I24 = ~I24::new();
@@ -450,8 +467,8 @@ impl ConcentratedLiquidityPool for Contract {
     fn set_price(price : Q64x64) {
         check_sqrt_price_bounds(price);
         let zero_price = Q64x64{ value: ~U128::from(0,0) };
-        if storage.price == zero_price {
-            storage.price = price;
+        if storage.sqrt_price == zero_price {
+            storage.sqrt_price = price;
         }
 
         ()
@@ -463,7 +480,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
-        let current_price = storage.price;
+        let current_price = storage.sqrt_price;
 
         let liquidity_minted = get_liquidity_for_amounts(price_lower, price_upper, current_price, ~U128::from(0, amount1_desired), ~U128::from(0, amount0_desired));
 
@@ -516,7 +533,7 @@ impl ConcentratedLiquidityPool for Contract {
     fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
-        let current_price = storage.price;
+        let current_price = storage.sqrt_price;
 
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
@@ -589,7 +606,7 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read)]
     fn get_price_and_nearest_tick() -> (Q64x64, I24){
-        (storage.price, storage.nearest_tick)
+        (storage.sqrt_price, storage.nearest_tick)
     }
 
     #[storage(read)]
@@ -922,7 +939,7 @@ fn tick_insert(
         storage.ticks.insert(prev_next, prev_next_tick);
     }
 
-    let tick_at_price: I24 = get_tick_at_price(storage.price);
+    let tick_at_price: I24 = get_tick_at_price(storage.sqrt_price);
 
     let above_is_between: bool = nearest < above && (above < tick_at_price || above == tick_at_price);
     let below_is_between: bool = nearest < below && (below < tick_at_price || below == tick_at_price);
