@@ -339,7 +339,7 @@ impl ConcentratedLiquidityPool for Contract {
             storage.liquidity = current_liquidity;
         }
         // handle case where not all liquidity is used
-        let amount_in = amount;
+        let amount_in = amount - amount_in_left;
 
         _swap_update_reserves(token_zero_to_one, amount_in, amount_out);
         _update_fees(token_zero_to_one, fee_growth_globalA, protocol_fee.lower);
@@ -347,17 +347,19 @@ impl ConcentratedLiquidityPool for Contract {
         let mut token0_amount = 0;
         let mut token1_amount = 0;
 
+        let sender: Identity= msg_sender().unwrap();
+
         if token_zero_to_one {
+            if amount_in_left > 0 transfer(amount_in_left, token0, sender);
             transfer(amount_out, token0, recipient);
             token0_amount = amount_in;
             token1_amount = amount_out;
         } else {
+            if amount_in_left > 0 transfer(amount_in_left, token1, sender);
             transfer(amount_out, token1, recipient);
             token1_amount = amount_in;
             token0_amount = amount_out;
         }
-
-        let sender: Identity= msg_sender().unwrap();
 
         log(SwapEvent {
             pool: std::context::call_frames::contract_id(),
