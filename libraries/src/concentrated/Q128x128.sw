@@ -51,7 +51,6 @@ impl core::ops::Ord for Q128x128 {
         self.value < other.value
     }
 }
-//TODO: check all basic ops
 impl core::ops::Add for Q128x128 {
     /// Add a Q128x128 to a Q128x128. Panics on overflow.
     fn add(self, other: Self) -> Self {
@@ -71,24 +70,22 @@ impl core::ops::Subtract for Q128x128 {
     }
 }
 impl core::ops::Multiply for Q128x128 {
-    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
-    fn multiply(self, other: Self) -> Self {
-        // If trying to subtract a larger number, panic.
-        let res = self.value * other.value;
-        // need some check
+    /// Nultiply a Q128x128 by a Q128x128. Panics of overflow.
+    fn multiply(self, other: Self) -> Q128x128 {
+        let int = self.value * ~U256::from(other.value.a, other.value.b, 0, 0);
+        let dec = self.value * ~U256::from(0, 0, other.value.c, other.value.d) >> 128;
         Self {
-            value: res,
+            value: int + dec
         }
     }
 }
 impl core::ops::Divide for Q128x128 {
-    /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
-    fn divide(self, other: Self) -> Self {
-        // If trying to subtract a larger number, panic.
-        let res = self.value / other.value;
-        // need some check
+    /// Divide a Q128x128 by a Q128x128. Panics if divisor is zero.
+    fn divide(self, divisor: Self) -> Self {
+        let int = self.value / ~U256::from(divisor.value.a, divisor.value.b, 0, 0);
+        let dec = self.value / ~U256::from(0, 0, divisor.value.c, divisor.value.d) << 128;
         Self {
-            value: res,
+            value: int + dec
         }
     }
 }
@@ -158,6 +155,14 @@ impl Q128x128 {
         }
     }
 
+    /// Creates Q128x128 that correponds to a unsigned integer
+    pub fn from_u256(uint256: U256) -> Self {
+        let value = uint256;
+        Self {
+            value
+        }
+    }
+
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> I24 {
         // find the most significant bit
@@ -179,18 +184,16 @@ impl Q128x128 {
 
         // log2(10^128) = 8 * log2(10^16)
         let log_base2_1_q128x128 = Q128x128 { value: ~U256::from(0, 0, 0, log_base2_max_u64 * 8) };
+        let mut tick_index: I24 = ~I24::from_uint(0);
 
-        let mut log_base2_value = Q128x128 { value: ~U256::from(0, 0, 0, 0) };
-        //TODO: should we round up to nearest tick?
         if log_base2_q128x128 > log_base2_1_q128x128 {
-            log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
-            return ~I24::from_uint(log_base2_value.value.b);
+            let log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
+            tick_index = ~I24::from_uint(log_base2_value.value.b);
         } else {
-            log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            return ~I24::from_neg(log_base2_value.value.b);
+            let log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
+            tick_index =  ~I24::from_neg(log_base2_value.value.b);
         }
-        //TODO: throw exception
-        ~I24::from_uint(0)
+        tick_index
     }
 }
 
