@@ -1,7 +1,6 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
-// dep Q64x64;
 dep I24;
 
 use core::num::*;
@@ -14,7 +13,6 @@ use std::{
 };
 
 use I24::*;
-// use Q64x64::*;
 
 pub struct Q128x128 {
     value: U256,
@@ -31,7 +29,7 @@ impl Q128x128 {
     }
     pub fn zero() -> Self {
         Self {
-            value: ~U256::from(0,0, 0, 0),
+            value: U256::from(0,0, 0, 0),
         }
     }
     pub fn bits() -> u32 {
@@ -95,7 +93,7 @@ impl core::ops::Divide for Q128x128 {
 impl Q128x128 {
     fn insert_sig_bits(ref mut self, msb_idx: u8, log_sig_bits: u64) -> U256 {
         // intiialize vector
-        let mut v = ~Vec::new();
+        let mut v = Vec::new();
         v.push(self.value.a); v.push(self.value.b); v.push(self.value.c); v.push(self.value.d);
         let mut result_idx = 63;
 
@@ -116,27 +114,27 @@ impl Q128x128 {
                 v.set(vector_idx, new_value);
                 // return when all 64 bits have been inserted
                 if(result_idx == 0 ) {
-                    return ~U256::from(v.get(0).unwrap(), v.get(1).unwrap(), v.get(2).unwrap(), v.get(3).unwrap());
+                    return U256::from(v.get(0).unwrap(), v.get(1).unwrap(), v.get(2).unwrap(), v.get(3).unwrap());
                 }
                 result_idx -= 1;
             }
             vector_idx += 1;
         }
-        ~U256::from(0,0,0,0)
+        U256::from(0,0,0,0)
     }
 }
 
 impl Q128x128 {
     /// Creates Q128x128 that correponds to a multplied Q64x64
     pub fn from(int: U128, dec: U128) -> Self {
-        let value = ~U256::from(int.upper, int.lower, dec.upper, dec.lower);
+        let value = U256::from(int.upper, int.lower, dec.upper, dec.lower);
         Self {
             value
         }
     }
 
     pub fn from_q64x64(int: U128) -> Self {
-        let value = ~U256::from(0, int.upper, int.lower, 0);
+        let value = U256::from(0, int.upper, int.lower, 0);
         Self {
             value
         }
@@ -144,7 +142,7 @@ impl Q128x128 {
 
     /// Creates Q128x128 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
-        let value = ~U256::from(0, uint, 0, 0);
+        let value = U256::from(0, uint, 0, 0);
         Self {
             value
         }
@@ -152,7 +150,7 @@ impl Q128x128 {
 
     /// Creates Q128x128 that correponds to a unsigned integer
     pub fn from_u128(uint128: U128) -> Self {
-        let value = ~U256::from(uint128.upper, uint128.lower, 0, 0);
+        let value = U256::from(uint128.upper, uint128.lower, 0, 0);
         Self {
             value
         }
@@ -178,19 +176,19 @@ impl Q128x128 {
         let log_base2_max_u64 = log2(ten_to_the_16th);
 
         // log2(10^128) = 8 * log2(10^16)
-        let log_base2_1_q128x128 = Q128x128 { value: ~U256::from(0, 0, 0, log_base2_max_u64 * 8) };
+        let log_base2_1_q128x128 = Q128x128 { value: U256::from(0, 0, 0, log_base2_max_u64 * 8) };
 
-        let mut log_base2_value = Q128x128 { value: ~U256::from(0, 0, 0, 0) };
+        let mut log_base2_value = Q128x128 { value: U256::from(0, 0, 0, 0) };
         //TODO: should we round up to nearest tick?
         if log_base2_q128x128 > log_base2_1_q128x128 {
             log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
-            return ~I24::from_uint(log_base2_value.value.b);
+            return I24::from_uint(log_base2_value.value.b);
         } else {
             log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            return ~I24::from_neg(log_base2_value.value.b);
+            return I24::from_neg(log_base2_value.value.b);
         }
         //TODO: throw exception
-        ~I24::from_uint(0)
+        I24::from_uint(0)
     }
 }
 
@@ -203,7 +201,7 @@ fn log2(number: u64) -> u64 {
 }
 
 fn most_sig_bit_idx(value: U256) -> u8 {
-    let mut v = ~Vec::new();
+    let mut v = Vec::new();
     v.push(value.a); v.push(value.b); v.push(value.c); v.push(value.d);
 
     let mut vector_idx = 0;
@@ -224,7 +222,7 @@ fn most_sig_bit_idx(value: U256) -> u8 {
 
 fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
     // intiialize vector
-    let mut v = ~Vec::new();
+    let mut v = Vec::new();
     // 192 -> 255       128 -> 191      64 -> 127         0 -> 63
     v.push(value.a); v.push(value.b); v.push(value.c); v.push(value.d);
     // initialize result bits

@@ -33,7 +33,7 @@ impl Q64x64 {
     }
     pub fn zero() -> Self {
         Self {
-            value: ~U128::from(0, 0),
+            value: U128::from(0, 0),
         }
     }
     pub fn bits() -> u32 {
@@ -82,23 +82,23 @@ impl core::ops::Subtract for Q64x64 {
 impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
     fn multiply(self, other: Self) -> Q128x128 {
-        let int_u128 = ~U128::from(0, self.value.upper) * ~U128::from(0, other.value.upper);
-        let dec_u128 = ~U128::from(0, self.value.lower) * ~U128::from(0, other.value.lower);
-        return ~Q128x128::from(int_u128, dec_u128);
+        let int_u128 = U128::from(0, self.value.upper) * U128::from(0, other.value.upper);
+        let dec_u128 = U128::from(0, self.value.lower) * U128::from(0, other.value.lower);
+        return Q128x128::from(int_u128, dec_u128);
     }
 }
 impl core::ops::Divide for Q64x64 {
     /// Divide a Q64x64 by a Q64x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        let zero = ~Q64x64::zero();
+        let zero = Q64x64::zero();
         assert(divisor != zero);
-        let denominator = ~U256::from(0, 0, 0, ~Self::denominator());
+        let denominator = U256::from(0, 0, 0, Self::denominator());
         // Conversion to U128 done to ensure no overflow happen
         // and maximal precision is avaliable
         // as it makes possible to multiply by the denominator in 
         // all cases
-        let self_u128 = ~U256::from(0, 0, self.value.upper, self.value.lower);
-        let divisor_u128 = ~U256::from(0, 0, divisor.value.upper, divisor.value.lower);
+        let self_u128 = U256::from(0, 0, self.value.upper, self.value.lower);
+        let divisor_u128 = U256::from(0, 0, divisor.value.upper, divisor.value.lower);
 
         // Multiply by denominator to ensure accuracy 
         let res_u256 = self_u128 * denominator / divisor_u128;
@@ -106,7 +106,7 @@ impl core::ops::Divide for Q64x64 {
             // panic on overflow
             revert(0);
         }
-        let res_u128 = ~U128::from(res_u256.c, res_u256.d);
+        let res_u128 = U128::from(res_u256.c, res_u256.d);
         Self {
             value: res_u128,
         }
@@ -115,11 +115,11 @@ impl core::ops::Divide for Q64x64 {
 impl core::ops::Mod for U128 {
     /// Modulo of a U128 by a U128. Panics if divisor is zero.
     fn modulo(self, divisor: Self) -> Self {
-        let zero = ~U128::from(0, 0);
-        let one = ~U128::from(0, 1);
+        let zero = U128::from(0, 0);
+        let one = U128::from(0, 1);
         assert(divisor != zero);
-        let mut quotient = ~U128::new();
-        let mut remainder = ~U128::new();
+        let mut quotient = U128::new();
+        let mut remainder = U128::new();
         let mut i = 128 - 1;
         while true {
             quotient <<= 1;
@@ -140,22 +140,22 @@ impl core::ops::Mod for U128 {
 }
 impl U128 {
     pub fn sqrt(self) -> Self {
-        let z = ~U128::from(0, 181);
+        let z = U128::from(0, 181);
         let x = self;
         let y = self;
-        if y < ~U128::from(0x100, 0x0000000000000000) {
+        if y < U128::from(0x100, 0x0000000000000000) {
             y >> 64;
             z << 32;
         }
-        if y < ~U128::from(0, 0x10000000000) {
+        if y < U128::from(0, 0x10000000000) {
             y >> 32;
             z << 16;
         }
-        if y < ~U128::from(0, 0x1000000) {
+        if y < U128::from(0, 0x1000000) {
             y >> 16;
             z << 8;
         }
-        let z = (z * (y + ~U128::from(0, 65536))) >> 18;
+        let z = (z * (y + U128::from(0, 65536))) >> 18;
         let z = (z + (x / z)) >> 1;
         let z = (z + (x / z)) >> 1;
         let z = (z + (x / z)) >> 1;
@@ -172,7 +172,7 @@ impl U128 {
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
-        let value = ~U128::from(uint, 0);
+        let value = U128::from(uint, 0);
         Self {
             value
         }
