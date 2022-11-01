@@ -197,8 +197,3 @@ impl core::ops::Divide for I24 {
     }
 }
 
-impl core::ops::Mod for I24{
-    fn modulo(self, other: I24) -> I24 {
-        return (self - other * (self / other));
-    }
-}
