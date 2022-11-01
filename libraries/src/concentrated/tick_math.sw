@@ -14,11 +14,6 @@ use std::{
 use Q64x64::*;
 use Q128x128::*;
 
-impl U256 {
-    fn modulo(self, other: U256) -> U256 {
-        return (self - other * (self / other));
-    }
-}
 pub fn MAX_TICK() -> I24 {
     return I24::max();
 

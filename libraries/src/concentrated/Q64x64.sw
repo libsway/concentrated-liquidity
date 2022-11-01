@@ -131,37 +131,7 @@ impl core::ops::Mod for U128 {
         remainder
     }
 }
-impl U128 {
-    pub fn sqrt(self) -> Self {
-        let z = U128::from(0, 181);
-        let x = self;
-        let y = self;
-        if y < U128::from(0x100, 0x0000000000000000) {
-            y >> 64;
-            z << 32;
-        }
-        if y < U128::from(0, 0x10000000000) {
-            y >> 32;
-            z << 16;
-        }
-        if y < U128::from(0, 0x1000000) {
-            y >> 16;
-            z << 8;
-        }
-        let z = (z * (y + U128::from(0, 65536))) >> 18;
-        let z = (z + (x / z)) >> 1;
-        let z = (z + (x / z)) >> 1;
-        let z = (z + (x / z)) >> 1;
-        let z = (z + (x / z)) >> 1;
-        let z = (z + (x / z)) >> 1;
-        let z = (z + (x / z)) >> 1;
-        let mut z = (z + (x / z)) >> 1;
-        if (x / z) < z {
-            z = x / z;
-        }
-        z
-    }
-}
+
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
