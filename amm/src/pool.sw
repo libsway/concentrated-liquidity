@@ -277,7 +277,7 @@ impl ConcentratedLiquidityPool for Contract {
                     // we need to cross the next tick
                     output = get_dy(current_liquidity, next_price, current_price, false);
                     current_price = next_price;
-                    if next_price == next_tick_price { cross = true } else { break }
+                    if next_price == next_tick_price { cross = true }
                     amount_in_left -= max_dx;
                 }
             }
@@ -296,8 +296,8 @@ impl ConcentratedLiquidityPool for Contract {
                     // we need to cross the next tick
                     output = get_dx(current_liquidity, current_price, next_price, false);
                     current_price = next_price;
-                    if next_price == next_tick_price { cross = true } else { break }
                     amount_in_left -= max_dy;
+                    if next_price == next_tick_price { cross = true }
                 }
                 let mut fee_growth = storage.fee_growth_global0;
 
@@ -335,6 +335,7 @@ impl ConcentratedLiquidityPool for Contract {
                     );
                 }
             }
+            else { break; }
         }
 
         storage.sqrt_price = current_price;
@@ -346,6 +347,7 @@ impl ConcentratedLiquidityPool for Contract {
             storage.liquidity = current_liquidity;
         }
         // handle case where not all liquidity is used
+        let amount_in_left = amount_in_left.lower;
         let amount_in = amount - amount_in_left;
 
         _swap_update_reserves(token_zero_to_one, amount_in, amount_out);
@@ -357,12 +359,12 @@ impl ConcentratedLiquidityPool for Contract {
         let sender: Identity= msg_sender().unwrap();
 
         if token_zero_to_one {
-            if amount_in_left > 0 transfer(amount_in_left, token0, sender);
+            if amount_in_left > 0 { transfer(amount_in_left, token0, recipient) }
             transfer(amount_out, token0, recipient);
             token0_amount = amount_in;
             token1_amount = amount_out;
         } else {
-            if amount_in_left > 0 transfer(amount_in_left, token1, sender);
+            if amount_in_left > 0 { transfer(amount_in_left, token1, recipient) }
             transfer(amount_out, token1, recipient);
             token1_amount = amount_in;
             token0_amount = amount_out;
@@ -491,7 +493,7 @@ impl ConcentratedLiquidityPool for Contract {
 
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
-        let (amount0_fees, amount1_fees) = _update_position(recipient, lower, upper, liquidity_minted);
+        let (amount0_fees, amount1_fees) = _update_position(recipient, lower, upper, liquidity_minted, true);
 
         let sender: Identity= msg_sender().unwrap();
 
@@ -536,19 +538,22 @@ impl ConcentratedLiquidityPool for Contract {
 
     #[storage(read, write)]
     fn burn(recipient: Identity, lower: I24, upper: I24, liquidity_amount: U128) -> (u64, u64, u64, u64) {
+
+        // get prices
         let price_lower = get_price_sqrt_at_tick(lower);
         let price_upper = get_price_sqrt_at_tick(upper);
         let current_price = storage.sqrt_price;
 
         // _updateSecondsPerLiquidity(uint256(liquidity));
 
-        if ((price_lower < current_price) || (price_lower == current_price)) && current_price > price_upper {
+        // if the liquidity is in range subtract from current liquidity
+        if ((current_price > price_lower) || (current_price == price_lower)) && current_price < price_upper {
             storage.liquidity -= liquidity_amount;
         }
 
         let sender: Identity= msg_sender().unwrap();
 
-        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_amount);
+        let (amount0_fees, amount1_fees) = _update_position(sender, lower, upper, liquidity_amount, false);
 
         let (token0_amount, token1_amount) = get_amounts_for_liquidity(price_upper, price_lower, current_price, liquidity_amount, false);
 
@@ -570,10 +575,10 @@ impl ConcentratedLiquidityPool for Contract {
             tick_upper:upper,
         });
 
-        // nearestTick = Ticks.remove(ticks, lower, upper, amount, nearestTick);
-        // only remove if there is no other liquidity present
-        //TODO:
-        (token0_amount, token1_amount, 0, 0)
+        let mut nearest_tick = storage.nearest_tick;
+        storage.nearest_tick = tick_remove(lower, upper, liquidity_amount, nearest_tick);
+        
+        (token0_amount, token1_amount, amount0_fees, amount1_fees)
     }
 
     #[storage(read, write)]
@@ -598,7 +603,7 @@ impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn collect(tick_lower: I24, tick_upper: I24) -> (u64, u64) {
         let sender: Identity= msg_sender().unwrap();
-        let (amount0_fees, amount1_fees) = _update_position(sender, tick_lower, tick_upper, ~U128::from(0,0));
+        let (amount0_fees, amount1_fees) = _update_position(sender, tick_lower, tick_upper, ~U128::from(0,0), false);
 
         storage.reserve0 -= amount0_fees;
         storage.reserve1 -= amount1_fees;
@@ -643,12 +648,34 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 }
 
 #[storage(read, write)]
-fn _update_position( owner: Identity, lower: I24, upper: I24, amount: U128) -> (u64, u64) {
-    //let position = storage.positions.get((owner, lower, upper));
-
+fn _update_position(owner: Identity, lower: I24, upper: I24, amount: U128, add_liquidity: bool) -> (u64, u64) {
+    let mut position = storage.positions.get((owner, lower, upper));
+    assert(add_liquidity || amount <= position.liquidity);
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
+    
+    let amount0_fees = 
+        ~Q128x128::from_q64x64((range_fee_growth0 - position.fee_growth_inside0).value) * ~Q128x128::from_u128(position.liquidity);
+    let amount0_fees = amount0_fees.value.b;
 
-    (0, 0)
+    let amount1_fees = 
+        ~Q128x128::from_q64x64((range_fee_growth1 - position.fee_growth_inside1).value) * ~Q128x128::from_u128(position.liquidity);
+    let amount1_fees = amount1_fees.value.b;
+
+    if add_liquidity {
+        position.liquidity += amount;
+        //TODO: handle overflow
+    } else {
+        position.liquidity -= amount;
+    }
+
+    // checkpoint fee_growth_inside
+    position.fee_growth_inside0 = range_fee_growth0;
+    position.fee_growth_inside1 = range_fee_growth1;
+
+    // update storage map
+    storage.positions.insert((owner, lower, upper), position);
+    
+    (amount0_fees, amount1_fees)
 }
 
  #[storage(read, write)]
@@ -943,8 +970,8 @@ fn tick_insert(
 #[storage(read, write)]
 fn tick_remove(
     below: I24, above: I24,
+    amount: U128,
     ref mut nearest: I24,
-    amount: U128
 ) -> I24 {
     let mut current_tick = storage.ticks.get(below);
     let mut prev = current_tick.prev_tick;
