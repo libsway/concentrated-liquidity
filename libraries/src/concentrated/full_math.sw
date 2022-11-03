@@ -116,3 +116,4 @@ pub fn mul_div_rounding_up_q64x64(base: Q128x128, factor: Q128x128, denominator:
         revert(0);
     }
     Q64x64{value: U128{ upper: res.value.b, lower: res.value.c}}
+}

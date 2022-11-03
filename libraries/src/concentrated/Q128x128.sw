@@ -31,7 +31,7 @@ impl Q128x128 {
     }
     pub fn zero() -> Self {
         Self {
-            value: U256::from(0,0, 0, 0),
+            value: U256{a: 0,b: 0,c: 0,d: 0},
         }
     }
     pub fn bits() -> u32 {
@@ -72,8 +72,8 @@ impl core::ops::Subtract for Q128x128 {
 impl core::ops::Multiply for Q128x128 {
     /// Nultiply a Q128x128 by a Q128x128. Panics of overflow.
     fn multiply(self, other: Self) -> Q128x128 {
-        let int = self.value * U256::from(other.value.a, other.value.b, 0, 0);
-        let dec = self.value * U256::from(0, 0, other.value.c, other.value.d) >> 128;
+        let int = self.value * U256{a: other.value.a, b: other.value.b, c: 0, d: 0};
+        let dec = self.value * U256{a: 0, b: 0, c: other.value.c, d: other.value.d} >> 128;
         Self {
             value: int + dec
         }
@@ -82,8 +82,8 @@ impl core::ops::Multiply for Q128x128 {
 impl core::ops::Divide for Q128x128 {
     /// Divide a Q128x128 by a Q128x128. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        let int = self.value / U256::from(divisor.value.a, divisor.value.b, 0, 0);
-        let dec = self.value / U256::from(0, 0, divisor.value.c, divisor.value.d) << 128;
+        let int = self.value / U256{a: divisor.value.a, b: divisor.value.b, c: 0, d: 0};
+        let dec = self.value / U256{a: 0, b: 0,c: divisor.value.c, d: divisor.value.d} << 128;
         Self {
             value: int + dec
         }
@@ -113,44 +113,29 @@ impl Q128x128 {
                 v.set(vector_idx, new_value);
                 // return when all 64 bits have been inserted
                 if(result_idx == 0 ) {
-                    return U256::from(v.get(0).unwrap(), v.get(1).unwrap(), v.get(2).unwrap(), v.get(3).unwrap());
+                    return U256{ a: v.get(0).unwrap(), b: v.get(1).unwrap(), c: v.get(2).unwrap(), d: v.get(3).unwrap()} ;
                 }
                 result_idx -= 1;
             }
             vector_idx += 1;
         }
-        U256::from(0,0,0,0)
+        U256{a: 0, b: 0, c: 0, d: 0 }
     }
 }
 
 impl Q128x128 {
-    /// Creates Q128x128 that correponds to a multplied Q64x64
-    pub fn from(int: U128, dec: U128) -> Self {
-        let value = U256::from(int.upper, int.lower, dec.upper, dec.lower);
-        Self {
-            value
-        }
-    }
-
-    pub fn from_q64x64(int: U128) -> Self {
-        let value = U256::from(0, int.upper, int.lower, 0);
-        Self {
+    /// Creates Q128x128 that correponds to a unsigned integer
+    pub fn from_uint(uint: u64) -> Q128x128 {
+        let value = U256{a: 0, b: uint,c: 0,d: 0};
+        Q128x128 {
             value
         }
     }
 
     /// Creates Q128x128 that correponds to a unsigned integer
-    pub fn from_uint(uint: u64) -> Self {
-        let value = U256::from(0, uint, 0, 0);
-        Self {
-            value
-        }
-    }
-
-    /// Creates Q128x128 that correponds to a unsigned integer
-    pub fn from_u128(uint128: U128) -> Self {
-        let value = U256::from(uint128.upper, uint128.lower, 0, 0);
-        Self {
+    pub fn from_u128(uint128: U128) -> Q128x128 {
+        let value = U256{a: uint128.upper,b: uint128.lower, c: 0, d: 0};
+        Q128x128 {
             value
         }
     }
@@ -183,7 +168,7 @@ impl Q128x128 {
         let log_base2_max_u64 = log2(ten_to_the_16th);
 
         // log2(10^128) = 8 * log2(10^16)
-        let log_base2_1_q128x128 = Q128x128 { value: U256::from(0, 0, 0, log_base2_max_u64 * 8) };
+        let log_base2_1_q128x128 = Q128x128 { value: U256{a: 0, b: 0, c: 0, d: (log_base2_max_u64 * 8) }};
         let mut tick_index: I24 = I24::from_uint(0);
 
         if log_base2_q128x128 > log_base2_1_q128x128 {
