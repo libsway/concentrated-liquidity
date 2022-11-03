@@ -15,11 +15,15 @@ pub trait From {
     fn from(underlying: u32) -> Self;
 }
 
-impl From for I24 {
+impl From<u32> for I24 {
     /// Helper function to get a signed number from with an underlying
-    fn from(underlying: u32) -> Self {
+    fn from(underlying: u32) -> I24 {
         assert(underlying < 16777216u32);
-        Self { underlying }
+        I24 { underlying }
+    }
+
+    fn into(self) -> u32 {
+        self.underlying
     }
 }
 
@@ -51,13 +55,6 @@ impl I24 {
 }
 
 impl I24 {
-    // Return the underlying value
-    pub fn into(self) -> u32 {
-        self.underlying
-    }
-}
-
-impl I24 {
     /// Initializes a new, zeroed I24.
     pub fn new() -> Self {
         Self {
@@ -76,16 +73,16 @@ impl I24 {
         abs_value
     }
     /// The smallest value that can be represented by this integer type.
-    pub fn min() -> Self {
+    pub fn min() -> I24 {
         // Return 0u32 which is actually −8,388,608
-        Self {
+        I24 {
             underlying: 0u32,
         }
     }
     /// The largest value that can be represented by this type,
-    pub fn max() -> Self {
+    pub fn max() -> I24 {
         // Return max 24-bit number which is actually 8,388,607
-        Self {
+        I24 {
             underlying: 16777215u32,
         }
     }

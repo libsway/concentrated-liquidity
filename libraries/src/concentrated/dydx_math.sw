@@ -36,11 +36,11 @@ pub fn get_dx(
     let PRECISION_BITS: u64 = 64;
     let mut dx: U128 = U128{upper:0, lower:0};
     if round_up {
-        dx = mul_div_rounding_up_u256(U256::from(0, 0, liquidity.upper, liquidity.lower) << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128());
-        if dx % price_lower.u128() == U128{upper:0, lower:0} {
+        dx = mul_div_rounding_up_u256(U256::from((0, 0, liquidity.upper, liquidity.lower)) << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128());
+        if dx % price_lower.u128() == (U128{upper:0, lower:0}) {
             dx = dx / price_lower.u128();
         } else {
-            dx = (dx / price_lower.u128()) + U128{upper:0, lower:1};
+            dx = (dx / price_lower.u128()) + U128{upper: 0, lower:1};
         }
     } else {
         dx = mul_div_u256(U256{a:0, b:0, c:liquidity.upper, d:liquidity.lower} << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128()) / price_lower.u128();
