@@ -1,4 +1,4 @@
-# 🌴🔱 Exeggutor AMM 🌴🔱
+# 🌴 Exeggutor AMM 🌴
 
 The Exeggutor AMM is a reference implementation of Concentrated Liquidity in Sway. To run on the FuelVM many modifications had to be made, specifically around the typing of many variables. The design expectation of this AMM is that tokens on the FuelVM would use 8 decimal precision, and store balances in a `u64`.
 
