@@ -174,7 +174,7 @@ pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     //0x48a170391f7dc42444e8fa2
     let ratio = 
         if (absTick & U256::from(0, 0, 0, 0x80000)) != zero { 
-            (ratio * U256::from(0x00000000, 0x48a17039, 0x91f7dc42, 0x444e8fa2)) >> 128 
+            (ratio * U256{a:0x00000000, b:0x48a17039, c:0x91f7dc42, d: 0x444e8fa2}) >> 128 
         } else { 
             ratio 
         };
@@ -183,9 +183,9 @@ pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     }
     // shr 128 to downcast to a U128
     let round_up: U256 = if (ratio % (U256::from(0,0,0,1) << 128) == U256::from(0,0,0,0)) {
-        U256::from(0,0,0,0)
+        U256{a:0,b:0,c:0,d:0)
     } else {
-        U256::from(0,0,0,1)
+        U256{a:0,b:0,c:0,d:1)
     };
     let price: U256 = ratio + round_up;
     return Q64x64::from(U128::from(price.b, price.c));

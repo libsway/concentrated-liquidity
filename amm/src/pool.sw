@@ -806,7 +806,7 @@ pub fn tick_cross(
     let outside_growth = storage.ticks.get(next).seconds_growth_outside;
 
     //cast outside_growth into U256
-    let seconds_growth_outside = U256::from(0,0,outside_growth.upper,outside_growth.lower);
+    let seconds_growth_outside = U256{a:0,b:0,c:outside_growth.upper,d:outside_growth.lower};
 
     //do the math, downcast to U128, store in storage.ticks
     let outside_math: U256 = seconds_growth_global - seconds_growth_outside;

@@ -18,7 +18,7 @@ pub trait From {
 impl From for I24 {
     /// Helper function to get a signed number from with an underlying
     fn from(underlying: u32) -> Self {
-        assert(underlying < 16777216);
+        assert(underlying < 16777216u32);
         Self { underlying }
     }
 }
@@ -79,19 +79,19 @@ impl I24 {
     pub fn min() -> Self {
         // Return 0u32 which is actually −8,388,608
         Self {
-            underlying: 0,
+            underlying: 0u32,
         }
     }
     /// The largest value that can be represented by this type,
     pub fn max() -> Self {
         // Return max 24-bit number which is actually 8,388,607
         Self {
-            underlying: 16777215,
+            underlying: 16777215u32,
         }
     }
     /// The size of this type in bits.
     pub fn bits() -> u32 {
-        24
+        24u32
     }
     /// Helper function to get a negative value of unsigned numbers
     pub fn from_neg(value: u32) -> Self {
