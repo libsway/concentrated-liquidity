@@ -144,6 +144,13 @@ impl Q128x128 {
         }
     }
 
+    pub fn from_q64x64(q64: U128) -> Q128x128 {
+        let value = U256{a: 0, b: q64.upper,c:  q64.lower,d: 0};
+        Q128x128 {
+            value
+        }
+    }
+
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> I24 {
         // find the most significant bit
