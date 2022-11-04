@@ -1,4 +1,5 @@
 library I24;
+
 use core::num::*;
 use std::assert::assert;
 
@@ -56,15 +57,15 @@ impl I24 {
 
 impl I24 {
     /// Initializes a new, zeroed I24.
-    pub fn new() -> Self {
-        Self {
-            underlying: Self::indent(),
+    pub fn new() -> I24 {
+        I24 {
+            underlying: I24::indent(),
         }
     }
     pub fn abs(self) -> u32 {
-        let is_gt_zero: bool = (self.underlying > Self::indent()) || (self.underlying == Self::indent());
-        let abs_pos = self.underlying - Self::indent();
-        let abs_neg = Self::indent() + (Self::indent() - self.underlying);
+        let is_gt_zero: bool = (self.underlying > I24::indent()) || (self.underlying == I24::indent());
+        let abs_pos = self.underlying - I24::indent();
+        let abs_neg = I24::indent() + (I24::indent() - self.underlying);
         let abs_value = if is_gt_zero {
             abs_pos
         } else {
@@ -76,7 +77,7 @@ impl I24 {
     pub fn min() -> I24 {
         // Return 0u32 which is actually −8,388,608
         I24 {
-            underlying: 0u32,
+            underlying: 0,
         }
     }
     /// The largest value that can be represented by this type,
@@ -91,17 +92,17 @@ impl I24 {
         24u32
     }
     /// Helper function to get a negative value of unsigned numbers
-    pub fn from_neg(value: u32) -> Self {
-        Self {
-            underlying: Self::indent() - value,
+    pub fn from_neg(value: u32) -> I24 {
+        I24 {
+            underlying: I24::indent() - value,
         }
     }
     /// Helper function to get a positive value from unsigned number
-    pub fn from_uint(value: u32) -> Self {
+    pub fn from_uint(value: u32) -> I24 {
         // as the minimal value of I24 is 2147483648 (1 << 31) we should add I24::indent() (1 << 31) 
-        let underlying: u32 = value + Self::indent();
+        let underlying: u32 = value + I24::indent();
         assert(underlying < 16777216);
-        Self { underlying }
+        I24 { underlying }
     }
 }
 

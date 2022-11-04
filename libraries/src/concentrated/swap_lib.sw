@@ -1,14 +1,11 @@
 library swap_lib;
 
-dep full_math;
-dep Q64x64;
-dep Q128x128;
 
-use Q64x64::*;
-use Q128x128::*;
+use ::Q64x64::*;
+use ::Q128x128::*;
 use std::u128::U128;
 use core::num::*;
-use full_math::*;
+use ::full_math::*;
 
 pub fn handle_fees(output: u64, swap_fee: u32, current_liquidity: U128, total_fee_amount: u64, amount_out: u64, protocol_fee: u64, ref mut fee_growth_global: Q64x64) -> (u64, u64, u64, Q64x64) {
     let PRECISION = U128{upper:0, lower:u64::max()};
