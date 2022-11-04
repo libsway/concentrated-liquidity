@@ -1,12 +1,18 @@
 library dydx_math;
 
 dep full_math;
-dep Q64x64;
 
-use full_math::*;
-use Q64x64::*;
+use full_math::{
+    mul_div,
+    mul_div_rounding_up,
+    mul_div_q64x64,
+    mul_div_rounding_up_q64x64,
+    mul_div_u256,
+    mul_div_rounding_up_u256
+};
+use ::Q64x64::Q64x64;
 use std::u256::U256;
-use std::u128::*;
+use std::u128::U128;
 
 
 // Obligatory note on liquidity

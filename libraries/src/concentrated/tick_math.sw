@@ -1,18 +1,13 @@
 library tick_math;
 
-dep I24;
-dep Q64x64;
-dep Q128x128;
-
-use I24::*;
+use ::I24::I24;
 use std::{
-    u128::*,
-    u256::*,
+    u128::U128,
+    u256::U256,
     result::Result,
-    math::*, 
 };
-use Q64x64::*;
-use Q128x128::*;
+use ::Q64x64::Q64x64;
+use ::Q128x128::Q128x128;
 
 pub fn MAX_TICK() -> I24 {
     return I24::max();

@@ -3,11 +3,11 @@ library full_math;
 dep Q128x128;
 dep Q64x64;
 
-use std::{result::Result, u128::*, u256::*};
+use std::{result::Result, u128::U128, u256::U256};
 use std::revert::revert;
-use core::ops::*;
-use Q128x128::*;
-use Q64x64::*;
+//use core::ops::*;
+use Q128x128::Q128x128;
+use Q64x64::Q64x64;
 
 pub enum FullMathError {
     DivisionByZero: (),

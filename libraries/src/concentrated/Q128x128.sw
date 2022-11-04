@@ -1,9 +1,6 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
-// dep Q64x64;
-dep I24;
-
 use core::num::*;
 use std::{
     assert::assert, 
@@ -13,8 +10,7 @@ use std::{
     u128::*,
 };
 
-use I24::*;
-// use Q64x64::*;
+use ::I24::I24;
 
 pub struct Q128x128 {
     value: U256,
