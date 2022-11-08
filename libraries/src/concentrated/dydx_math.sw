@@ -4,16 +4,15 @@ dep full_math;
 
 use full_math::{
     mul_div,
-    mul_div_rounding_up,
     mul_div_q64x64,
+    mul_div_rounding_up,
     mul_div_rounding_up_q64x64,
+    mul_div_rounding_up_u256,
     mul_div_u256,
-    mul_div_rounding_up_u256
 };
 use ::Q64x64::Q64x64;
 use std::u256::U256;
 use std::u128::U128;
-
 
 // Obligatory note on liquidity
 // Note that dydx math is implicitly expecting a Q.
@@ -23,8 +22,14 @@ pub fn get_dy(
     price_lower: Q64x64,
     round_up: bool,
 ) -> U128 {
-    let PRECISION: U128 = U128{upper:0, lower:u64::max()};
-    let mut dy: U128 = U128{upper:0, lower:0};
+    let PRECISION: U128 = U128 {
+        upper: 0,
+        lower: u64::max(),
+    };
+    let mut dy: U128 = U128 {
+        upper: 0,
+        lower: 0,
+    };
     if round_up {
         dy = mul_div_rounding_up(liquidity, (price_upper - price_lower).u128(), PRECISION);
     } else {
@@ -40,16 +45,31 @@ pub fn get_dx(
     round_up: bool,
 ) -> U128 {
     let PRECISION_BITS: u64 = 64;
-    let mut dx: U128 = U128{upper:0, lower:0};
+    let mut dx: U128 = U128 {
+        upper: 0,
+        lower: 0,
+    };
     if round_up {
         dx = mul_div_rounding_up_u256(U256::from((0, 0, liquidity.upper, liquidity.lower)) << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128());
-        if dx % price_lower.u128() == (U128{upper:0, lower:0}) {
+        if dx % price_lower.u128() == (U128 {
+                upper: 0,
+                lower: 0,
+            })
+        {
             dx = dx / price_lower.u128();
         } else {
-            dx = (dx / price_lower.u128()) + U128{upper: 0, lower:1};
+            dx = (dx / price_lower.u128()) + U128 {
+                upper: 0,
+                lower: 1,
+            };
         }
     } else {
-        dx = mul_div_u256(U256{a:0, b:0, c:liquidity.upper, d:liquidity.lower} << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128()) / price_lower.u128();
+        dx = mul_div_u256(U256 {
+            a: 0,
+            b: 0,
+            c: liquidity.upper,
+            d: liquidity.lower,
+        } << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128()) / price_lower.u128();
     }
     dx
 }
@@ -60,8 +80,14 @@ pub fn get_liquidity_for_amounts(
     dy: U128,
     dx: U128,
 ) -> U128 {
-    let PRECISION: U128 = U128{upper:0, lower:u64::max()};
-    let mut liquidity: U128 = U128{upper:0, lower:0};
+    let PRECISION: U128 = U128 {
+        upper: 0,
+        lower: u64::max(),
+    };
+    let mut liquidity: U128 = U128 {
+        upper: 0,
+        lower: 0,
+    };
     if price_upper < current_price
         || price_upper == current_price
     {
