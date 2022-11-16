@@ -2,7 +2,7 @@ library tick_math;
 
 use ::I24::I24;
 use std::{result::Result, u128::U128, u256::U256};
-use ::Q64x64::Q64x64;
+use ::Q64x64::{full_multiply, Q64x64};
 use ::Q128x128::Q128x128;
 
 pub fn MAX_TICK() -> I24 {
@@ -464,7 +464,7 @@ pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
     check_sqrt_price_bounds(sqrt_price);
 
     // square price
-    let mut price: Q128x128 = sqrt_price * sqrt_price;
+    let mut price: Q128x128 = full_multiply(sqrt_price, sqrt_price);
 
     // base value for tick change -> 1.0001
     let mut tick_base = Q128x128 {

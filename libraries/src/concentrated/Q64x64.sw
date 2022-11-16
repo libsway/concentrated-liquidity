@@ -110,6 +110,36 @@ impl Q64x64 {
         };
     }
 }
+
+pub fn full_multiply(first: Q64x64, other: Q64x64) -> Q128x128 {
+        let int = U256 {
+            a: 0,
+            b: first.value.upper,
+            c: first.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: other.value.upper,
+            c: 0,
+            d: 0,
+        };
+        let dec = U256 {
+            a: 0,
+            b: first.value.upper,
+            c: first.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: 0,
+            c: other.value.lower,
+            d: 0,
+        } >> 64;
+        return Q128x128 {
+            value: (int + dec),
+        };
+}
+
+
 impl core::ops::Divide for Q64x64 {
     /// Divide a Q64x64 by a Q64x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
