@@ -883,7 +883,8 @@ fn tick_insert(
         // tick has not been initialized
         let mut prev_tick = storage.ticks.get(prev_below);
         let prev_next = prev_tick.next_tick;
-        
+        let below_next = if above < prev_tick.next_tick { above } else { prev_tick.next_tick };
+
         // check below ordering
         assert(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK());
         assert(prev_below < below && below < prev_above);
@@ -891,7 +892,7 @@ fn tick_insert(
         if below < nearest || below == nearest {
             storage.ticks.insert(below, Tick {
                 prev_tick: prev_below,
-                next_tick: prev_next,
+                next_tick: below_next,
                 liquidity: amount,
                 fee_growth_outside0: storage.fee_growth_global0,
                 fee_growth_outside1: storage.fee_growth_global1,
@@ -925,9 +926,11 @@ fn tick_insert(
         assert(prev_next > above);
         assert(prev_above < above);
 
+        let above_prev = if prev_tick.prev_tick < below { below } else { prev_above };
+
         if above < nearest || above == nearest {
             storage.ticks.insert(above, Tick {
-                prev_tick: prev_above,
+                prev_tick: above_prev,
                 next_tick: prev_next,
                 liquidity: amount,
                 fee_growth_outside0: storage.fee_growth_global0,
