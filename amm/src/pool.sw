@@ -39,6 +39,9 @@ pub enum ConcentratedLiquidityPoolErrors {
     UpperOdd: (),
     MaxTickLiquidity: (),
     Overflow: (),
+    AlreadyInitialized: (),
+    AboveMaxFee: (),
+    NoDuplicateTokens: (),
 }
 
 impl core::ops::Ord for ContractId {
@@ -187,9 +190,9 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(first_token: ContractId, second_token: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
-        assert(swap_fee <= storage.max_fee);
-        assert(first_token != second_token);
+        require(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}}, ConcentratedLiquidityPoolErrors::AlreadyInitialized);
+        require(swap_fee <= storage.max_fee, ConcentratedLiquidityPoolErrors::AboveMaxFee);
+        require(first_token != second_token, ConcentratedLiquidityPoolErrors::NoDuplicateTokens);
         storage.token0 = if first_token < second_token { first_token }  else { second_token };
         storage.token1 = if first_token < second_token { second_token } else { first_token };
         storage.nearest_tick = get_tick_at_price(sqrt_price);

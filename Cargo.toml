@@ -1,5 +1,5 @@
 [package]
-name = "Exeguttor_Tests"
+name = "Concentrated_Liquidity_Tests"
 description = "A testing harness for running tests for the Exeguttor AMM and its libraries"
 version = "0.1.0"
 edition = "2021"
