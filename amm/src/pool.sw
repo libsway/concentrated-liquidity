@@ -254,7 +254,7 @@ impl ConcentratedLiquidityPool for Contract {
                 // decreasing price
                 if next_price < sqrt_price_limit { next_price = sqrt_price_limit }
                 let max_dx : U128 = get_dx(current_liquidity, next_price, current_price, false);
-                if amount_in_left <= max_dx {
+                if amount_in_left < max_dx || amount_in_left == max_dx {
                     let liquidity_padded = Q128x128::from_u128(current_liquidity);
                     let price_padded     = Q128x128::from_q64x64(current_price.value);
                     let amount_in_padded = Q128x128::from_u128(amount_in_left);
@@ -648,7 +648,7 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 #[storage(read, write)]
 fn _update_position(owner: Identity, lower: I24, upper: I24, amount: U128, add_liquidity: bool) -> (u64, u64) {
     let mut position = storage.positions.get((owner, lower, upper));
-    assert(add_liquidity || amount <= position.liquidity);
+    assert(add_liquidity || (amount < position.liquidity || amount == position.liquidity));
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
     
     let amount0_fees = 

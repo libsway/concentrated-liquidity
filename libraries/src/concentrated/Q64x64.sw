@@ -2,13 +2,7 @@
 library Q64x64;
 
 use core::num::*;
-use std::{
-    assert::assert, 
-    math::*, 
-    revert::revert, 
-    u128::*, 
-    u256::*
-};
+use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 
 use ::Q128x128::Q128x128;
 
@@ -31,7 +25,10 @@ impl Q64x64 {
     }
     pub fn zero() -> Self {
         Self {
-            value: U128{upper: 0, lower: 0},
+            value: U128 {
+                upper: 0,
+                lower: 0,
+            },
         }
     }
     pub fn bits() -> u32 {
@@ -86,28 +83,109 @@ impl core::ops::Subtract for Q64x64 {
 impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
     fn multiply(self, other: Self) -> Q128x128 {
-        let int = U256{a: 0, b: self.value.upper, c: self.value.lower, d: 0} * U256{a: 0, b: other.value.upper, c: 0, d: 0};
-        let dec = U256{a: 0, b: self.value.upper, c: self.value.lower, d: 0} * U256{a: 0, b: 0, c: other.value.lower, d: 0} >> 64;
-        return Q128x128{value: (int + dec)};
+        let int = U256 {
+            a: 0,
+            b: self.value.upper,
+            c: self.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: other.value.upper,
+            c: 0,
+            d: 0,
+        };
+        let dec = U256 {
+            a: 0,
+            b: self.value.upper,
+            c: self.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: 0,
+            c: other.value.lower,
+            d: 0,
+        } >> 64;
+        return Q128x128 {
+            value: (int + dec),
+        };
     }
 }
+
+pub fn full_multiply(first: Q64x64, other: Q64x64) -> Q128x128 {
+        let int = U256 {
+            a: 0,
+            b: first.value.upper,
+            c: first.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: other.value.upper,
+            c: 0,
+            d: 0,
+        };
+        let dec = U256 {
+            a: 0,
+            b: first.value.upper,
+            c: first.value.lower,
+            d: 0,
+        } * U256 {
+            a: 0,
+            b: 0,
+            c: other.value.lower,
+            d: 0,
+        } >> 64;
+        return Q128x128 {
+            value: (int + dec),
+        };
+}
+
+
 impl core::ops::Divide for Q64x64 {
     /// Divide a Q64x64 by a Q64x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        let int = U256{a: 0, b: self.value.upper, c: self.value.lower, d: 0} / U256{a: 0, b: divisor.value.upper, c: 0, d: 0};
-        let dec = U256{a: 0, b: self.value.upper, c: self.value.lower, d: 0} / U256{a: 0, b: 0, c: divisor.value.lower, d: 0} << 64;
+        let int = U256 {
+            a: 0,
+            b: self.value.upper,
+            c: self.value.lower,
+            d: 0,
+        } / U256 {
+            a: 0,
+            b: divisor.value.upper,
+            c: 0,
+            d: 0,
+        };
+        let dec = U256 {
+            a: 0,
+            b: self.value.upper,
+            c: self.value.lower,
+            d: 0,
+        } / U256 {
+            a: 0,
+            b: 0,
+            c: divisor.value.lower,
+            d: 0,
+        } << 64;
         let value_u256 = int + dec;
-        let value_u128 = U128{upper: value_u256.b, lower: value_u256.c};
+        let value_u128 = U128 {
+            upper: value_u256.b,
+            lower: value_u256.c,
+        };
         Self {
-            value: value_u128
+            value: value_u128,
         }
     }
 }
 impl core::ops::Mod for U128 {
     /// Modulo of a U128 by a U128. Panics if divisor is zero.
     fn modulo(self, divisor: Self) -> Self {
-        let zero = U128{upper: 0, lower: 0};
-        let one =  U128{upper: 0, lower: 1};
+        let zero = U128 {
+            upper: 0,
+            lower: 0,
+        };
+        let one = U128 {
+            upper: 0,
+            lower: 1,
+        };
         assert(divisor != zero);
         let mut quotient = U128::new();
         let mut remainder = U128::new();
@@ -133,10 +211,11 @@ impl core::ops::Mod for U128 {
 impl Q64x64 {
     /// Creates Q64x64 that correponds to a unsigned integer
     pub fn from_uint(uint: u64) -> Self {
-        let value = U128{upper: uint, lower: 0};
-        Self {
-            value
-        }
+        let value = U128 {
+            upper: uint,
+            lower: 0,
+        };
+        Self { value }
     }
 }
 impl Root for Q64x64 {
