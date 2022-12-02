@@ -12,47 +12,25 @@ async fn i24_test_bits() {
     let (contract_instance, _id) = get_test_contract_instance(wallet).await;
 
     let result = contract_instance.methods()
-        .test_bits()
+        .test_most_sig_bit_idx()
             .call()
             .await
             .unwrap()
             .value;
 
-    assert!(result);
-}
-
-#[tokio::test]
-async fn i24_test_indent() {
-    let wallet = launch_provider_and_get_wallet().await;
-
-    let (contract_instance, _id) = get_test_contract_instance(wallet).await;
+    println!("{}", result);
 
     let result = contract_instance.methods()
-        .test_indent()
+        .test_most_sig_bits()
             .call()
             .await
             .unwrap()
             .value;
 
-    assert!(result);
+    println!("{}", result);
+
+    assert!(result != result);
 }
-
-#[tokio::test]
-async fn i24_max_indent() {
-    let wallet = launch_provider_and_get_wallet().await;
-
-    let (contract_instance, _id) = get_test_contract_instance(wallet).await;
-
-    let result = contract_instance.methods()
-        .test_max()
-            .call()
-            .await
-            .unwrap()
-            .value;
-
-    assert!(result);
-}
-
 
 async fn get_test_contract_instance(
     wallet: WalletUnlocked,

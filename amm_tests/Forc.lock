@@ -5,16 +5,16 @@ dependencies = ['std']
 
 [[package]]
 name = 'core'
-source = 'path+from-root-6A09A1886494359D'
+source = 'path+from-root-A104220B213F1FCE'
 
 [[package]]
 name = 'std'
-source = 'git+https://github.com/fuellabs/sway?tag=v0.30.0#37deaee8fccf5804d78a003cf64f14fac654fc41'
+source = 'git+https://github.com/fuellabs/sway?tag=v0.31.2#12239f7d57441a75b0979f2f34d5151a777a5c0a'
 dependencies = ['core']
 
 [[package]]
 name = 'tests'
-source = 'root'
+source = 'member'
 dependencies = [
     'cl_libs',
     'std',
