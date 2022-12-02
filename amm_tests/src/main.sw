@@ -7,6 +7,7 @@ use cl_libs::I24::*;
 abi ExeguttorTests {
     fn test_most_sig_bit_idx() -> u64;
     fn test_most_sig_bits() -> u64;
+    fn test_binary_log() -> I24;
 }
 
 impl ExeguttorTests for Contract {      
@@ -31,6 +32,12 @@ impl ExeguttorTests for Contract {
         msb_idx = most_sig_bit_idx(test_number);
         result = most_sig_bits(test_number, msb_idx);
         assert(result == (2**63 + 2**62));
+        result
+    }
+
+    fn test_binary_log() -> I24 {
+        let mut test_number = Q128x128{value:U256{a:0, b: 1<<63, c: 1 << 63, d:0}};
+        let result = test_number.binary_log();
         result
     }
 }

@@ -198,45 +198,16 @@ impl Q128x128 {
     pub fn binary_log(ref mut self) -> I24 {
         // find the most significant bit
         let msb_idx = most_sig_bit_idx(self.value);
-        return I24 {underlying: msb_idx};
 
         // find the 64 most significant bits
         let sig_bits: u64 = most_sig_bits(self.value, msb_idx);
         // assert(sig_bits != 0);
 
         // take the log base 2 of sig_bits
-        // let log_sig_bits = log2(sig_bits);
         let log_sig_bits = sig_bits.log(2);
-        return I24 {underlying: 0};
-        // reinsert log bits into Q128x128
-        let log_base2_u256 = self.insert_sig_bits(msb_idx, log_sig_bits);
-        let log_base2_q128x128 = Q128x128 {
-            value: log_base2_u256,
-        };
-
-        // log2(10^128) + 8*log2(10^16)
-        let ten_to_the_16th: u64 = 10000000000000000;
-        let log_base2_max_u64 = ten_to_the_16th.log(2);
-
-        // log2(10^128) = 8 * log2(10^16)
-        let log_base2_1_q128x128 = Q128x128 {
-            value: U256 {
-                a: 0,
-                b: 0,
-                c: 0,
-                d: (log_base2_max_u64 * 8),
-            },
-        };
-        let mut tick_index: I24 = I24::from_uint(0);
-
-        if log_base2_q128x128 > log_base2_1_q128x128 {
-            let log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
-            tick_index = I24::from_uint(log_base2_value.value.b);
-        } else {
-            let log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            tick_index = I24::from_neg(log_base2_value.value.b);
-        }
-        tick_index
+        let log_offset = I24::from_uint(msb_idx) - I24::from_uint(191);
+        
+        I24::from_uint(log_sig_bits) + log_offset
     }       
 }
 
@@ -266,12 +237,6 @@ pub fn most_sig_bit_idx(value: U256) -> u64 {
     return 0;
 }
 
-/// 32/32
-/// 0x00000000ffffffff/0xffffffff00000000
-/// 1.0001
-/// log (1) = 0
-/// log base 2 (1.0001) = 0.xxx
-
 pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
     let value_idx = msb_idx / 64;
     let msb_mod   = (msb_idx + 1) % 64;
@@ -297,12 +262,7 @@ pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
         _ => return 0,
     };
 
-    // example: msb_mod = 31
     let lsh_first_val = first_val << (64 - msb_mod);    
-
-    //let mask_second_val = 2 ** (msb_mod) - 1 << (64 - msb_mod);
-    // return mask_second_val;
-    //let masked_second_val = second_val & mask_second_val;
 
     let rsh_second_val = second_val >> (msb_mod);
 

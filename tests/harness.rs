@@ -29,6 +29,15 @@ async fn i24_test_bits() {
 
     println!("{}", result);
 
+    let result = contract_instance.methods()
+        .test_binary_log()
+            .call()
+            .await
+            .unwrap()
+            .value;
+
+    println!("{}", result.underlying);
+
     assert!(result != result);
 }
 
