@@ -38,10 +38,10 @@ impl core::ops::Eq for I24 {
 
 impl core::ops::Ord for I24 {
     fn gt(self, other: Self) -> bool {
-        self.underlying > other.underlying
+        self.underlying > other.underlying && self.underlying < 8388608u32
     }
     fn lt(self, other: Self) -> bool {
-        self.underlying < other.underlying
+        self.underlying < other.underlying && self.underlying > 8388608u32
     }
 }
 
@@ -94,15 +94,27 @@ impl I24 {
     /// Helper function to get a negative value of unsigned numbers
     pub fn from_neg(value: u32) -> I24 {
         I24 {
-            underlying: I24::indent() - value,
+            underlying: I24::indent() + value,
         }
     }
     /// Helper function to get a positive value from unsigned number
     pub fn from_uint(value: u32) -> I24 {
         // as the minimal value of I24 is 2147483648 (1 << 31) we should add I24::indent() (1 << 31) 
-        let underlying: u32 = value + I24::indent();
-        assert(underlying < 16777216);
+        let underlying: u32 = value;
+        assert(underlying < 8388608u32);
         I24 { underlying }
+    }
+    pub fn from_uint_bool(value: u32, is_neg: bool) -> I24 {
+        // as the minimal value of I24 is 2147483648 (1 << 31) we should add I24::indent() (1 << 31) 
+        if is_neg {
+            return I24 {
+                underlying: I24::indent() + value,
+            };
+        } else {
+            let underlying: u32 = value;
+            assert(underlying < 8388608u32);
+            return I24 { underlying };
+        }
     }
 }
 
@@ -129,7 +141,7 @@ impl core::ops::Subtract for I24 {
     /// Subtract a I24 from a I24. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         let mut res = Self::new();
-        if self > other {
+        if self.underlying > Self::indent() {
             // add 1 << 31 to avoid loosing the move
             res = Self::from(self.underlying - other.underlying + Self::indent());
         } else {
