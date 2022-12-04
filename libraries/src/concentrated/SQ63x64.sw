@@ -24,7 +24,7 @@ impl SQ63x64 {
     }
     fn indent() -> u64 {
         9223372036854775808u64
-    }
+    }  
     pub fn from(_upper: u64, _lower: u64) -> Self {
         Self { 
             value: U128 {
@@ -267,20 +267,20 @@ impl SQ63x64 {
         }
 
         // equal to 0.5
-        let half_scaling_unit = U128::from((0,1 << 63)) >> 1;
-        let double_scaling_unit = U128::from((2,0)) >> 1;
-        let mut delta = half_scaling_unit;
-        let zero = U128::from((0,2^62));
-        while delta > zero {
-            y = (y * y) / scaling_unit;
-            if y > double_scaling_unit || y == double_scaling_unit {
-                if is_negative { 
-                    log_result -= SQ63x64{ value: delta << 1 } 
-                } else { log_result += SQ63x64{ value: delta << 1 } };
-                y >>= 1;
-            }
-            delta >>= 1;
-        }
+        // let half_scaling_unit = U128::from((0,1 << 63)) >> 1;
+        // let double_scaling_unit = U128::from((2,0)) >> 1;
+        // let mut delta = half_scaling_unit;
+        // let zero = U128::from((0,2^62));
+        // while delta > zero {
+        //     y = (y * y) / scaling_unit;
+        //     if y > double_scaling_unit || y == double_scaling_unit {
+        //         if is_negative { 
+        //             log_result -= SQ63x64{ value: delta << 1 } 
+        //         } else { log_result += SQ63x64{ value: delta << 1 } };
+        //         y >>= 1;
+        //     }
+        //     delta >>= 1;
+        // }
 
         log_result
     }    

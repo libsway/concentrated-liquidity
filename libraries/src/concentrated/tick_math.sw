@@ -476,7 +476,7 @@ pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
         },
     };
 
-    //TODO: should we round up?
+    //TODO: should we round up? no because we always take the lower tick
     // change of base; log base 1.0001 (price) = log base 2 (price) / log base 2 (1.0001)
     let log_base_tick_of_price: SQ63x64 = price.binary_log() / tick_base.binary_log();
     let log_base_tick_of_price: I24 = log_base_tick_of_price.to_i24();
