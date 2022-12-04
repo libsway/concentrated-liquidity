@@ -7,5 +7,4 @@ dep concentrated/SQ63x64;
 dep concentrated/dydx_math;
 dep concentrated/full_math;
 dep concentrated/swap_lib;
-dep concentrated/tick_delta_math;
 dep concentrated/tick_math;

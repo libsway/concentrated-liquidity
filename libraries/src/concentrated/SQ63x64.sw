@@ -65,7 +65,7 @@ impl SQ63x64 {
         // assert(_value.a < Self::indent() || _value.a === Self::indent());
         Self {
             value: U128 {
-                upper: _value.value.a + 9223372036854775808u64,
+                upper: _value.value.b + 9223372036854775808u64,
                 lower: _value.value.c
             }
         }
@@ -163,7 +163,7 @@ impl SQ63x64 {
         let dec = U256 {
             a: 0,
             b: self.value.upper & mask,
-            c: self.value.lower,
+            c: self.value.lower,    
             d: 0,
         } * U256 {
             a: 0,
@@ -226,6 +226,7 @@ impl core::ops::Divide for SQ63x64 {
 impl SQ63x64 {
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> SQ63x64 {
+        assert(self.value.upper < 0x8000000000000000);
         // find the most significant bit
         let scaling_unit = U128::from((1,0)) >> 1;
         let msb_idx = most_sig_bit_idx(self);
@@ -254,16 +255,16 @@ impl SQ63x64 {
         let half_scaling_unit = U128::from((0,1 << 63)) >> 1;
         let double_scaling_unit = U128::from((2,0)) >> 1;
         let mut delta = half_scaling_unit;
-        let zero = U128::from((0,2^62));
+        let zero = U128::from((0,2^63));
         while delta > zero {
-            y = (y * y) / scaling_unit;
+            // y = (y*y) / scaling_unit; // this line is broken
             if y > double_scaling_unit || y == double_scaling_unit {
                 if is_negative { 
-                    log_result -= SQ63x64{ value: delta << 1 } 
-                } else { log_result += SQ63x64{ value: delta << 1 } };
-                y >>= 1;
+                    log_result = log_result - SQ63x64{ value: delta << 1 } 
+                } else { log_result = log_result + SQ63x64{ value: delta << 1 } };
+                y = y >> 1;
             }
-            delta >>= 1;
+            delta = delta >> 1;
         }
 
         log_result
@@ -304,4 +305,58 @@ pub fn most_sig_bit_idx(input: SQ63x64) -> u32 {
     }
     //TODO: should throw err
     return 0;
+}
+
+#[test]
+fn sq63x64_from_uint() {
+}
+
+#[test]
+fn sq63x64_from_neg() {
+}
+
+#[test]
+fn sq63x64_from_q64x64() {
+}
+
+#[test]
+fn sq63x64_from_q128x128() {
+}
+
+#[test]
+fn sq63x64_abs_u128() {
+}
+
+#[test]
+fn sq63x64_to_i24() {
+}
+
+#[test]
+fn sq63x64_add() {  
+}
+
+#[test]
+fn sq63x64_subtract() {
+}
+
+#[test]
+fn sq63x64_multiply() {
+}
+
+#[test]
+fn sq63x64_divide() {
+}
+
+#[test]
+fn sq63x64_most_sig_bit_idx() {
+    let mut test_number = SQ63x64::from_uint(9);
+    let msb = most_sig_bit_idx(test_number);
+    // assert(log.value.lower > 0);
+}
+
+#[test]
+fn sq63x64_binary_log() {
+    let mut test_number = SQ63x64::from_uint(9);
+    let log = test_number.binary_log();
+    // assert(log.value.lower > 0);
 }

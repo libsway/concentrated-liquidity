@@ -203,3 +203,35 @@ pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
 
     (lsh_first_val + rsh_second_val)
 }
+
+#[test]
+fn q128x128_from_uint() {
+}
+
+#[test]
+fn q128x128_from_u128() {
+}
+
+#[test]
+fn q128x128_from_u256() {
+}
+
+#[test]
+fn q128x128_from_q64x64() {
+}
+
+#[test]
+fn q128x128_add() {  
+}
+
+#[test]
+fn q128x128_subtract() {
+}
+
+#[test]
+fn q128x128_multiply() {
+}
+
+#[test]
+fn q128x128_divide() {
+}

@@ -207,3 +207,40 @@ impl core::ops::Divide for I24 {
     }
 }
 
+#[test]
+fn i24_from_neg() {
+}
+
+#[test]
+fn i24_from_uint() {
+}
+
+#[test]
+fn i24_from_uint_bool() {
+}
+
+#[test]
+fn i24_add() {
+}
+
+#[test]
+fn i24_subtract() {
+}
+
+#[test]
+fn i24_multiply() {
+}
+
+#[test]
+fn i24_divide() {
+}
+
+#[test]
+fn i24_mod() {
+}
+
+#[test]
+fn i24_abs() {
+}
+
+

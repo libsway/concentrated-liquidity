@@ -484,8 +484,49 @@ pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
     log_base_tick_of_price
 }
 
+// Returns the delta sum for given liquidity
+// need to create I128 lib if we are going to use this
+fn delta_math(liquidity: U128, delta: U128) -> U128 {
+    let delta_sum = liquidity + delta;
+    let delta_sub = liquidity - delta;
+
+    if delta < (U128 {
+        upper: 0,
+        lower: 0,
+    }) {
+    //Panic if condition not met    
+        assert(delta_sub < liquidity);
+        return delta_sub;
+    } else {
+    //Panic if condition not met
+        assert((delta_sum > liquidity) || (delta_sum == liquidity));
+        return delta_sum;
+    }
+}
+
+
 #[test]
-fn test_get_price() {
+fn tick_math_get_price_from_tick() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
+}
+
+#[test]
+fn tick_math_get_tick_from_price() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
+}
+
+#[test]
+fn tick_math_delta_math() {
     let mut tick_base = SQ63x64 {
         value: U128 {
             upper: 1,

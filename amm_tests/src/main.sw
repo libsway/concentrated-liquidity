@@ -34,6 +34,7 @@ impl ExeguttorTests for Contract {
 
     fn test_binary_log() -> SQ63x64 {
         let mut test_number = SQ63x64::from_uint(9);
+        test_number * test_number;
         let result = test_number.binary_log();
         result
     }

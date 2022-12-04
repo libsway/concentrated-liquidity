@@ -131,3 +131,19 @@ pub fn get_amounts_for_liquidity(
     }
     (token0_amount, token1_amount)
 }
+
+#[test]
+fn dydx_math_get_dy() {
+}
+
+#[test]
+fn dydx_math_get_dx() {
+}
+
+#[test]
+fn dydx_math_get_liquidity_for_amounts() {
+}
+
+#[test]
+fn dydx_math_get_amount_for_liquidity() {
+}

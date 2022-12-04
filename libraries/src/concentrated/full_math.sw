@@ -228,3 +228,35 @@ pub fn mul_div_rounding_up_q64x64(
         },
     }
 }
+
+#[test]
+fn full_math_mul_div_u64() {
+}
+
+#[test]
+fn full_math_mul_div() {
+}
+
+#[test]
+fn full_math_mul_div_rounding_up_u64() {
+}
+
+#[test]
+fn full_math_mul_div_rounding_up() {
+}
+
+#[test]
+fn full_math_mul_div_u256() {
+}
+
+#[test]
+fn full_math_mul_div_rounding_up_u256() {
+}
+
+#[test]
+fn full_math_mul_div_q64x64() {
+}
+
+#[test]
+fn full_math_mul_div_rounding_up_q64x64() {
+}

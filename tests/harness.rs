@@ -72,7 +72,7 @@ async fn sq63x64() {
 }
 
 #[tokio::test]
-async fn i24() {
+async fn sq63x64() {
     let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 4000);
     let wallet = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

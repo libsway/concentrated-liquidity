@@ -41,3 +41,7 @@ pub fn handle_fees(
         fee_growth_global,
     );
 }
+
+#[test]
+fn test_handle_fees() {
+}

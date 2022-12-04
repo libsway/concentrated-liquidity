@@ -222,3 +222,27 @@ impl Root for Q64x64 {
         }
     }
 }
+
+#[test]
+fn q64x64_from() {
+}
+
+#[test]
+fn q64x64_from_uint() {
+}
+
+#[test]
+fn q64x64_add() {  
+}
+
+#[test]
+fn q64x64_subtract() {
+}
+
+#[test]
+fn q64x64_multiply() {
+}
+
+#[test]
+fn q64x64_divide() {
+}
