@@ -147,20 +147,22 @@ impl SQ63x64 {
     /// Multiply a SQ63x64 with a SQ63x64. Panics of overflow.
     //TODO: assumes positive values
     fn multiply(self, other: Self) -> Self {
+        let mask = 0x0fffffffffffffff; 
+        let indent = 0x8000000000000000;
         let int = U256 {
             a: 0,
-            b: self.value.upper,
+            b: self.value.upper & mask,// negates sign
             c: self.value.lower,
             d: 0,
         } * U256 {
             a: 0,
-            b: other.value.upper,
+            b: other.value.upper & mask,
             c: 0,
             d: 0,
         };
         let dec = U256 {
             a: 0,
-            b: self.value.upper,
+            b: self.value.upper & mask,
             c: self.value.lower,
             d: 0,
         } * U256 {
@@ -169,58 +171,38 @@ impl SQ63x64 {
             c: other.value.lower,
             d: 0,
         } >> 64;
-        return SQ63x64 {
-            value: U128::from((int.b, int.c)) + U128::from((dec.b, dec.c)),
-        };
+        if self.value.upper ^ other.value.lower & indent == indent {
+            //one value is negative
+            return SQ63x64 {
+                value: U128::from((int.b + indent, int.c)) + U128::from((dec.b, dec.c)),
+            };
+        } else {
+            return SQ63x64 {
+                value: U128::from((int.b, int.c)) + U128::from((dec.b, dec.c)),
+            };
+        }
     }
 }
-
-pub fn full_multiply(first: SQ63x64, other: SQ63x64) -> Q128x128 {
-        let int = U256 {
-            a: 0,
-            b: first.value.upper,
-            c: first.value.lower,
-            d: 0,
-        } * U256 {
-            a: 0,
-            b: other.value.upper,
-            c: 0,
-            d: 0,
-        };
-        let dec = U256 {
-            a: 0,
-            b: first.value.upper,
-            c: first.value.lower,
-            d: 0,
-        } * U256 {
-            a: 0,
-            b: 0,
-            c: other.value.lower,
-            d: 0,
-        } >> 64;
-        return Q128x128 {
-            value: (int + dec),
-        };
-}
-
 
 impl core::ops::Divide for SQ63x64 {
     /// Divide a SQ63x64 by a SQ63x64. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
+        let mask = 0x0fffffffffffffff; 
+        let indent = 0x8000000000000000;
         let int = U256 {
             a: 0,
-            b: self.value.upper,
+            b: self.value.upper & mask,
             c: self.value.lower,
             d: 0,
         } / U256 {
             a: 0,
-            b: divisor.value.upper,
+            b: divisor.value.upper & mask,
             c: 0,
             d: 0,
         };
         let dec = U256 {
             a: 0,
-            b: self.value.upper,
+            b: self.value.upper & mask,
             c: self.value.lower,
             d: 0,
         } / U256 {
@@ -229,14 +211,16 @@ impl core::ops::Divide for SQ63x64 {
             c: divisor.value.lower,
             d: 0,
         } << 64;
-        let value_u256 = int + dec;
-        let value_u128 = U128 {
-            upper: value_u256.b,
-            lower: value_u256.c,
-        };
-        Self {
-            value: value_u128,
-        }
+        if self.value.upper ^ divisor.value.lower & indent == indent {
+            //one value is negative
+            return SQ63x64 {
+                value: U128::from((int.b + indent, int.c)) + U128::from((dec.b, dec.c)),
+            };
+        } else {
+            return SQ63x64 {
+                value: U128::from((int.b, int.c)) + U128::from((dec.b, dec.c)),
+            };
+        } 
     }
 }
 impl SQ63x64 {
@@ -267,20 +251,20 @@ impl SQ63x64 {
         }
 
         // equal to 0.5
-        // let half_scaling_unit = U128::from((0,1 << 63)) >> 1;
-        // let double_scaling_unit = U128::from((2,0)) >> 1;
-        // let mut delta = half_scaling_unit;
-        // let zero = U128::from((0,2^62));
-        // while delta > zero {
-        //     y = (y * y) / scaling_unit;
-        //     if y > double_scaling_unit || y == double_scaling_unit {
-        //         if is_negative { 
-        //             log_result -= SQ63x64{ value: delta << 1 } 
-        //         } else { log_result += SQ63x64{ value: delta << 1 } };
-        //         y >>= 1;
-        //     }
-        //     delta >>= 1;
-        // }
+        let half_scaling_unit = U128::from((0,1 << 63)) >> 1;
+        let double_scaling_unit = U128::from((2,0)) >> 1;
+        let mut delta = half_scaling_unit;
+        let zero = U128::from((0,2^62));
+        while delta > zero {
+            y = (y * y) / scaling_unit;
+            if y > double_scaling_unit || y == double_scaling_unit {
+                if is_negative { 
+                    log_result -= SQ63x64{ value: delta << 1 } 
+                } else { log_result += SQ63x64{ value: delta << 1 } };
+                y >>= 1;
+            }
+            delta >>= 1;
+        }
 
         log_result
     }    

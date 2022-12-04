@@ -483,3 +483,13 @@ pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
     // return base 1.0001 price
     log_base_tick_of_price
 }
+
+#[test]
+fn test_get_price() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
+}
