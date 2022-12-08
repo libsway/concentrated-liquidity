@@ -227,12 +227,10 @@ impl SQ63x64 {
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> SQ63x64 {
         assert(self.value.upper < 0x8000000000000000);
+        let scaling_unit = U128::from((2,0));
         let two_u128 = U128::from((0,2)); 
         // find the most significant bit
-        let scaling_unit = U128::from((1,0)) >> 1;
         let msb_idx = most_sig_bit_idx(self);
-
-        return scaling_unit;
         
         // integer part is just the bit offset
         let mut log_result = SQ63x64::from(0,0);
@@ -243,12 +241,12 @@ impl SQ63x64 {
             msb_offset = msb_idx - 64;
             log_result = SQ63x64::from_uint(msb_offset); 
         } else { 
-            is_negative = true;
+            is_negative = true;     
             msb_offset = 64 - msb_idx;
             log_result = SQ63x64::from_neg(msb_offset);
         };
         
-        let mut y = self.value / two_u128**(U128::from((0,msb_offset + 1)));
+        let mut y = self.value >> (msb_offset + 1);
 
         if y == scaling_unit {
             return log_result;
@@ -256,20 +254,21 @@ impl SQ63x64 {
 
         // equal to 0.5
         let half_scaling_unit = U128::from((0,1 << 63)) / two_u128;
-        let double_scaling_unit = U128::from((2,0)) / two_u128;
         let mut delta = half_scaling_unit;
-        let zero = U128::from((0,2^60));
+        let zero = U128::from((0,1<<1));
         while delta > zero {
-            // y = (y*y) / scaling_unit; // this line is broken
-            if y > double_scaling_unit || y == double_scaling_unit {
+            y = (y*y) / scaling_unit << 2; // this line is broken
+            y = y << 1;
+            if y > scaling_unit || y == scaling_unit {
                 if is_negative { 
-                    log_result = log_result - SQ63x64{ value: delta << 1 } 
-                } else { log_result = log_result + SQ63x64{ value: delta << 1 } };
+                    log_result = log_result - SQ63x64{ value: delta << 1} 
+                } else { 
+                    log_result = log_result + SQ63x64{ value: delta << 1} };
                 y = y >> 1;
             }
+            y = y >> 1;
             delta = delta >> 1;
         }
-
         log_result
     }    
 }

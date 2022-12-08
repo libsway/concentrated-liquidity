@@ -12,7 +12,7 @@ abigen!(
 #[tokio::test]
 async fn sq63x64() {
     let mut wallet = WalletUnlocked::new_random(None);
-    let num_assets = 1;
+    let num_assets = 1; 
     let coins_per_asset = 100;
     let amount_per_coin = 1_000_000_000;
 
@@ -36,11 +36,11 @@ async fn sq63x64() {
         .collect::<Vec<_>>();
 
     // In order: gas_price, gas_limit, and maturity
-    let my_tx_params = TxParameters::new(None, Some(10_000_000), None);
+    let my_tx_params = TxParameters::new(None, Some(1_000_000_000), None);
 
     let consensus_parameters_config =
         ConsensusParameters::DEFAULT
-            .with_max_gas_per_tx(100_000_000_000)
+            .with_max_gas_per_tx(1_000_000_000_000)
             .with_gas_per_byte(0);
 
     let chain_config = ChainConfig {    
@@ -49,14 +49,22 @@ async fn sq63x64() {
             contracts: None,
             messages: None,
             ..StateConfig::default()}),
-            chain_name: "local".into(),
-            block_gas_limit: 100_000_000_000,
-            transaction_parameters: consensus_parameters_config,
-            ..Default::default()
+        chain_name: "local".into(),
+        block_gas_limit: 1_000_000_000_000,
+        transaction_parameters: consensus_parameters_config,
+        ..Default::default()
         };
-    
-    let (fuel_client, _socket_addr) = setup_test_client(coins,vec![],None,Some(chain_config),None).await;
+
+    let node_config = Config::local_node();
+    let (fuel_client, _socket_addr) = setup_test_client(
+                                        coins,
+                                        vec![],
+                                        Some(node_config),
+                                        Some(chain_config),
+                                        None
+                                      ).await;
     wallet.set_provider(Provider::new(fuel_client));
+
     let (contract_instance, _id) = get_test_contract_instance(wallet).await;
 
     let result = contract_instance.methods()
