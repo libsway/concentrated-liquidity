@@ -142,7 +142,7 @@ impl core::ops::Subtract for SQ63x64 {
             value: self.value - other.value,
         }
     }
-}
+} 
 impl SQ63x64 {
     /// Multiply a SQ63x64 with a SQ63x64. Panics of overflow.
     //TODO: assumes positive values
