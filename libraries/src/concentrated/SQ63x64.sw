@@ -255,15 +255,17 @@ impl SQ63x64 {
         // equal to 0.5
         let half_scaling_unit = U128::from((0,1 << 63)) / two_u128;
         let mut delta = half_scaling_unit;
-        let zero = U128::from((0,1<<1));
+        // will perform 31 iterations
+        let zero = U128::from((0,1<<(62-31)));
         while delta > zero {
             y = (y*y) / scaling_unit << 2; // this line is broken
             y = y << 1;
             if y > scaling_unit || y == scaling_unit {
                 if is_negative { 
-                    log_result = log_result - SQ63x64{ value: delta << 1} 
+                    log_result = log_result - SQ63x64{ value: delta << 1}; 
                 } else { 
-                    log_result = log_result + SQ63x64{ value: delta << 1} };
+                    log_result = log_result + SQ63x64{ value: delta << 1};
+                }
                 y = y >> 1;
             }
             y = y >> 1;
