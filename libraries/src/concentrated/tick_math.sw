@@ -2,8 +2,10 @@ library tick_math;
 
 use ::I24::I24;
 use std::{result::Result, u128::U128, u256::U256};
+use ::SQ63x64::*;
 use ::Q64x64::{full_multiply, Q64x64};
 use ::Q128x128::Q128x128;
+use ::SQ63x64::SQ63x64;
 
 pub fn MAX_TICK() -> I24 {
     return I24::max();
@@ -464,22 +466,71 @@ pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
     check_sqrt_price_bounds(sqrt_price);
 
     // square price
-    let mut price: Q128x128 = full_multiply(sqrt_price, sqrt_price);
+    let mut price: SQ63x64 = SQ63x64::from_q64x64(sqrt_price * sqrt_price);
 
     // base value for tick change -> 1.0001
-    let mut tick_base = Q128x128 {
-        value: U256 {
-            a: 0,
-            b: 0,
-            c: (10001 << (64 - 4)),
-            d: 0,
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
         },
     };
 
-    //TODO: should we round up?
+    //TODO: should we round up? no because we always take the lower tick
     // change of base; log base 1.0001 (price) = log base 2 (price) / log base 2 (1.0001)
-    let log_base_tick_of_price: I24 = price.binary_log() / tick_base.binary_log();
-
+    let log_base_tick_of_price: SQ63x64 = price.binary_log() / tick_base.binary_log();
+    let log_base_tick_of_price: I24 = log_base_tick_of_price.to_i24();
     // return base 1.0001 price
     log_base_tick_of_price
+}
+
+// Returns the delta sum for given liquidity
+// need to create I128 lib if we are going to use this
+fn delta_math(liquidity: U128, delta: U128) -> U128 {
+    let delta_sum = liquidity + delta;
+    let delta_sub = liquidity - delta;
+
+    if delta < (U128 {
+        upper: 0,
+        lower: 0,
+    }) {
+    //Panic if condition not met    
+        assert(delta_sub < liquidity);
+        return delta_sub;
+    } else {
+    //Panic if condition not met
+        assert((delta_sum > liquidity) || (delta_sum == liquidity));
+        return delta_sum;
+    }
+}
+
+
+#[test]
+fn tick_math_get_price_from_tick() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
+}
+
+#[test]
+fn tick_math_get_tick_from_price() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
+}
+
+#[test]
+fn tick_math_delta_math() {
+    let mut tick_base = SQ63x64 {
+        value: U128 {
+            upper: 1,
+            lower: 429497 << 33, //approx. 1 bps
+        },
+    };
 }

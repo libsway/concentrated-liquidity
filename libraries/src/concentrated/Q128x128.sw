@@ -3,7 +3,6 @@ library Q128x128;
 
 use core::num::*;
 use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
-
 use ::I24::I24;
 
 pub struct Q128x128 {
@@ -104,56 +103,6 @@ impl core::ops::Divide for Q128x128 {
         }
     }
 }
-impl Q128x128 {
-    fn insert_sig_bits(ref mut self, msb_idx: u8, log_sig_bits: u64) -> U256 {
-        // intiialize vector
-        let mut v = Vec::new();
-        v.push(self.value.a);
-        v.push(self.value.b);
-        v.push(self.value.c);
-        v.push(self.value.d);
-        let mut result_idx = 63;
-
-        // match msb_idx (most significant bit index) with vector_idx
-        let start_vector_idx = (v.len() - 1) - (msb_idx) / 64;
-        let mut vector_idx = start_vector_idx;
-
-        // iterate over vector
-        while (vector_idx < v.len()) {
-            // initialize bit_idx
-            let mut bit_idx = if vector_idx == start_vector_idx {
-                msb_idx % 64
-            } else {
-                63
-            };
-            // iterate over each bit in each vector element
-            while (bit_idx > 0) {
-                // take the new bit from log_sig_bits and scale it to current bit_idx
-                let new_bit = log_sig_bits & (1 << result_idx) >> result_idx << bit_idx;
-                // replace old bits with new
-                let new_value = v.get(vector_idx).unwrap() + new_bit;
-                v.set(vector_idx, new_value);
-                // return when all 64 bits have been inserted
-                if (result_idx == 0) {
-                    return U256 {
-                        a: v.get(0).unwrap(),
-                        b: v.get(1).unwrap(),
-                        c: v.get(2).unwrap(),
-                        d: v.get(3).unwrap(),
-                    };
-                }
-                result_idx -= 1;
-            }
-            vector_idx += 1;
-        }
-        U256 {
-            a: 0,
-            b: 0,
-            c: 0,
-            d: 0,
-        }
-    }
-}
 
 impl Q128x128 {
     /// Creates Q128x128 that correponds to a unsigned integer
@@ -194,58 +143,10 @@ impl Q128x128 {
         Q128x128 { value }
     }
 
-    // Returns the log base 2 value
-    pub fn binary_log(ref mut self) -> I24 {
-        // find the most significant bit
-        let msb_idx = most_sig_bit_idx(self.value);
-
-        // find the 64 most significant bits
-        let sig_bits = most_sig_bits(self.value, msb_idx);
-
-        // take the log base 2 of sig_bits
-        let log_sig_bits = log2(sig_bits);
-
-        // reinsert log bits into Q128x128
-        let log_base2_u256 = self.insert_sig_bits(msb_idx, log_sig_bits);
-        let log_base2_q128x128 = Q128x128 {
-            value: log_base2_u256,
-        };
-
-        // log2(10^128) + 8*log2(10^16)
-        let ten_to_the_16th: u64 = 10000000000000000;
-        let log_base2_max_u64 = log2(ten_to_the_16th);
-
-        // log2(10^128) = 8 * log2(10^16)
-        let log_base2_1_q128x128 = Q128x128 {
-            value: U256 {
-                a: 0,
-                b: 0,
-                c: 0,
-                d: (log_base2_max_u64 * 8),
-            },
-        };
-        let mut tick_index: I24 = I24::from_uint(0);
-
-        if log_base2_q128x128 > log_base2_1_q128x128 {
-            let log_base2_value = log_base2_q128x128 - log_base2_1_q128x128;
-            tick_index = I24::from_uint(log_base2_value.value.b);
-        } else {
-            let log_base2_value = log_base2_1_q128x128 - log_base2_q128x128;
-            tick_index = I24::from_neg(log_base2_value.value.b);
-        }
-        tick_index
-    }
+          
 }
 
-fn log2(number: u64) -> u64 {
-    let two = 2;
-    asm(r1: number, r2: 2, r3) {
-        mlog r3 r1 r2;
-        r3: u64
-    }
-}
-
-fn most_sig_bit_idx(value: U256) -> u8 {
+pub fn most_sig_bit_idx(value: U256) -> u64 {
     let mut v = Vec::new();
     v.push(value.a);
     v.push(value.b);
@@ -254,15 +155,16 @@ fn most_sig_bit_idx(value: U256) -> u8 {
 
     let mut vector_idx = 0;
     while vector_idx < v.len() {
-        let mut bit_idx = 63;
+        let mut bit_idx = 64;
         while (bit_idx > 0) {
+            bit_idx -= 1;
             let bit_compare = 1 << bit_idx;
+            // return v.get(vector_idx).unwrap()
             if (v.get(vector_idx).unwrap() > bit_compare
                 || v.get(vector_idx).unwrap() == bit_compare)
-            {
-                return 64 * (v.len() - vector_idx) + (bit_idx)
+            {   
+                return 64 * (v.len() - vector_idx - 1) + (bit_idx);
             }
-            bit_idx -= 1;
         }
         vector_idx += 1;
     }
@@ -270,39 +172,66 @@ fn most_sig_bit_idx(value: U256) -> u8 {
     return 0;
 }
 
-fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
-    // intiialize vector
-    let mut v = Vec::new();
-    // 192 -> 255       128 -> 191      64 -> 127         0 -> 63
-    v.push(value.a);
-    v.push(value.b);
-    v.push(value.c);
-    v.push(value.d);
-    // initialize result bits
-    let mut result: u64 = 0;
-    let mut result_idx = 63;
-    // match msb_idx (most significant bit findex) with vector_idx
-    let start_vector_idx = (v.len() - 1) - (msb_idx) / 64;
-    let mut vector_idx = start_vector_idx;
-    while (vector_idx < v.len()) {
-        let mut bit_idx = if vector_idx == start_vector_idx {
-            msb_idx % 64
-        } else {
-            63
-        };
-        while (bit_idx > 0) {
-            let bit_compare = 1 << (bit_idx);
-            let xor_flag: bool = (v.get(vector_idx).unwrap() ^ bit_compare) < v.get(vector_idx).unwrap();
-            let result_add = if (xor_flag) { 1 << result_idx } else { 0 };
-            result += result_add;
-            result_idx -= 1;
-            bit_idx -= 1;
-            if (result_idx < 0) {
-                return result;
-            }
-        }
-        vector_idx += 1;
+pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
+    let value_idx = msb_idx / 64;
+    let msb_mod   = (msb_idx + 1) % 64;
+
+    let first_val: u64 = 0; let second_val: u64 = 0;
+
+    let first_val = match value_idx {
+        0 => value.d,
+        1 => value.c,
+        2 => value.b,
+        3 => value.a,
+        _ => return 0,
+    };
+
+    if msb_mod == 0 || value_idx == 0 {
+        return first_val;
     }
-    //TODO: should be an Error
-    return 0;
+
+    let second_val = match value_idx {
+        1 => value.d,
+        2 => value.c,
+        3 => value.b,
+        _ => return 0,
+    };
+
+    let lsh_first_val = first_val << (64 - msb_mod);    
+
+    let rsh_second_val = second_val >> (msb_mod);
+
+    (lsh_first_val + rsh_second_val)
+}
+
+#[test]
+fn q128x128_from_uint() {
+}
+
+#[test]
+fn q128x128_from_u128() {
+}
+
+#[test]
+fn q128x128_from_u256() {
+}
+
+#[test]
+fn q128x128_from_q64x64() {
+}
+
+#[test]
+fn q128x128_add() {  
+}
+
+#[test]
+fn q128x128_subtract() {
+}
+
+#[test]
+fn q128x128_multiply() {
+}
+
+#[test]
+fn q128x128_divide() {
 }
