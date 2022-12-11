@@ -9,6 +9,7 @@ abigen!(
     "./amm_tests/out/debug/tests-abi.json"
 );
 
+
 #[tokio::test]
 async fn sq63x64() {
     let mut wallet = WalletUnlocked::new_random(None);
@@ -68,7 +69,7 @@ async fn sq63x64() {
     let (contract_instance, _id) = get_test_contract_instance(wallet).await;
 
     let result = contract_instance.methods()
-        .test_most_sig_bit_idx()
+        .test_dydx_math()
             .tx_params(my_tx_params)
             .call()
             .await
@@ -76,29 +77,48 @@ async fn sq63x64() {
             .value;
 
     println!("{}", result);
+    // let result = contract_instance.methods()
+    //     .test_most_sig_bit_idx()
+    //         .tx_params(my_tx_params)
+    //         .call()
+    //         .await
+    //         .unwrap()
+    //         .value;
 
-    let result = contract_instance.methods()
-        .test_binary_log()
-            .tx_params(my_tx_params)
-            .call()
-            .await
-            .unwrap()
-            .value;
+    // println!("{}", result);
 
-    println!("{}", result.value.upper);
-    println!("{}", result.value.lower);
-    let base: u128 = 2;
-    println!("{}", base.pow(64));
+    // let result = contract_instance.methods()
+    //     .test_binary_log()
+    //         .tx_params(my_tx_params)
+    //         .call()
+    //         .await
+    //         .unwrap()
+    //         .value;
 
-    let result = contract_instance.methods()
-        .test_abs_u128()
-            .tx_params(my_tx_params)
-            .call()
-            .await
-            .unwrap()
-            .value;
+    // println!("{}", result.value.upper);
+    // println!("{}", result.value.lower);
+    // let base: u128 = 2;
+    // println!("{}", base.pow(64));
 
-    println!("{}", result.upper);
+    // let result = contract_instance.methods()
+    //     .test_abs_u128()
+    //         .tx_params(my_tx_params)
+    //         .call()
+    //         .await
+    //         .unwrap()
+    //         .value;
+
+    // println!("{}", result.upper);
+
+    // let result = contract_instance.methods()
+    // .test_get_tick_at_price()
+    //     .tx_params(my_tx_params)
+    //     .call()
+    //     .await
+    //     .unwrap()
+    //     .value;
+    // println!("log base 1.0001 of 9:");
+    // println!("{}", result.underlying);
 
     assert!(result != result);
 }

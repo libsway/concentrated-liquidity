@@ -82,24 +82,41 @@ impl core::ops::Subtract for Q64x64 {
 }
 impl Q64x64 {
     /// Multiply a Q64x64 with a Q64x64. Panics of overflow.
-    pub fn multiply(self, other: Self) -> Q64x64 {
-        let int = U128 {
-            upper: self.value.upper,
-            lower: self.value.lower,
-        } * U128 {
-            upper: other.value.upper,
-            lower: 0,
-        };
-        let dec = U128 {
-            upper: self.value.upper,
-            lower: self.value.lower,
-        } * U128 {
+    pub fn multiply(self, other: Self) -> Self {
+
+        let val_a = (U128 {
+            upper: 0,
+            lower: self.value.upper,
+        })* (U128 {
+            upper: 0,
+            lower: other.value.upper,
+        }) << 64;
+
+        let val_b = (U128 {
+            upper: 0,
+            lower: self.value.upper,
+        })* (U128 {
             upper: 0,
             lower: other.value.lower,
-        } >> 64;
-        return Q64x64 {
-            value: int + dec
-        };
+        });
+
+        let val_c = (U128 {
+            upper: 0,
+            lower: self.value.lower,
+        })* (U128 {
+            upper: 0,
+            lower: other.value.upper,
+        });
+                
+        let val_d = (U128 {
+            upper: 0,
+            lower: self.value.lower,
+        })* (U128 {
+            upper: 0,
+            lower: other.value.lower,
+        }) >> 64;
+
+        Q64x64{ value: val_a + val_b + val_c + val_d }
     }
 }
 

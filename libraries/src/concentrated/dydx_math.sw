@@ -14,6 +14,15 @@ use ::Q64x64::Q64x64;
 use std::u256::U256;
 use std::u128::U128;
 
+#[test]
+pub fn dydx_math_get_dy() -> u64 {
+    get_dy(
+        U128::from((1_000_000_000,0)),
+        Q64x64{value: U128::from((5000,0))},
+        Q64x64{value: U128::from((1000,0))},
+        false
+    )
+}
 // Obligatory note on liquidity
 // Note that dydx math is implicitly expecting a Q.
 pub fn get_dy(
@@ -21,29 +30,40 @@ pub fn get_dy(
     price_upper: Q64x64,
     price_lower: Q64x64,
     round_up: bool,
-) -> U128 {
+) -> u64 {
     let PRECISION: U128 = U128 {
-        upper: 0,
-        lower: u64::max(),
-    };
-    let mut dy: U128 = U128 {
-        upper: 0,
+        upper: 1,
         lower: 0,
     };
-    if round_up {
+    let mut dy = U128 {
+        upper: 0,
+        lower: 0
+    };
+    // return (price_upper - price_lower).u128() * liquidity / PRECISION;
+    if round_up {   
         dy = mul_div_rounding_up(liquidity, (price_upper - price_lower).u128(), PRECISION);
     } else {
         dy = mul_div(liquidity, (price_upper - price_lower).u128(), PRECISION);
     }
-
-    dy
+    dy.lower
 }
+
+#[test]
+fn dydx_math_get_dx() -> u64 {
+    get_dx(
+        U128::from((0,1_000_000_000)),
+        Q64x64{value: U128::from((5000,0))},
+        Q64x64{value: U128::from((1000,0))},
+        false
+    )
+}
+
 pub fn get_dx(
     liquidity: U128,
     price_upper: Q64x64,
     price_lower: Q64x64,
     round_up: bool,
-) -> U128 {
+) -> u64 {
     let PRECISION_BITS: u64 = 64;
     let mut dx: U128 = U128 {
         upper: 0,
@@ -71,8 +91,20 @@ pub fn get_dx(
             d: liquidity.lower,
         } << PRECISION_BITS, (price_upper - price_lower).u128(), price_upper.u128()) / price_lower.u128();
     }
-    dx
+    dx.lower
 }
+
+#[test]
+fn dydx_math_get_liquidity_for_amounts() -> U128 {
+    get_liquidity_for_amounts(
+        Q64x64{value: U128::from((5000,0))},
+        Q64x64{value: U128::from((1000,0))},
+        Q64x64{value: U128::from((5000,0))},
+        U128::from((0,1_000_000_000_000)),
+        U128::from((0,0))
+    )
+}
+
 pub fn get_liquidity_for_amounts(
     price_lower: Q64x64,
     price_upper: Q64x64,
@@ -107,6 +139,18 @@ pub fn get_liquidity_for_amounts(
     }
     liquidity
 }
+
+#[test]
+pub fn dydx_math_get_amounts_for_liquidity() -> (u64, u64) {
+    get_amounts_for_liquidity(
+        Q64x64{value: U128::from((5000,0))},
+        Q64x64{value: U128::from((1000,0))},
+        Q64x64{value: U128::from((5000,0))},
+        U128::from((0,1_000_000_000_000)),
+        false
+    )
+}
+
 pub fn get_amounts_for_liquidity(
     price_upper: Q64x64,
     price_lower: Q64x64,
@@ -120,30 +164,14 @@ pub fn get_amounts_for_liquidity(
         || price_upper == current_price
     {
         // Only supply `token1` (`token1` is Y).
-        token1_amount = get_dy(liquidity_amount, price_upper, price_lower, round_up).as_u64().unwrap();
+        token1_amount = get_dy(liquidity_amount, price_upper, price_lower, round_up);
     } else if (current_price < price_lower)
         || (current_price < price_lower)
     {
-        token0_amount = get_dx(liquidity_amount, price_upper, price_lower, round_up).as_u64().unwrap();
+        token0_amount = get_dx(liquidity_amount, price_upper, price_lower, round_up);
     } else {
-        token0_amount = get_dx(liquidity_amount, price_upper, price_lower, round_up).as_u64().unwrap();
-        token1_amount = get_dy(liquidity_amount, price_upper, price_lower, round_up).as_u64().unwrap();
+        token0_amount = get_dx(liquidity_amount, price_upper, price_lower, round_up);
+        token1_amount = get_dy(liquidity_amount, price_upper, price_lower, round_up);
     }
     (token0_amount, token1_amount)
-}
-
-#[test]
-fn dydx_math_get_dy() {
-}
-
-#[test]
-fn dydx_math_get_dx() {
-}
-
-#[test]
-fn dydx_math_get_liquidity_for_amounts() {
-}
-
-#[test]
-fn dydx_math_get_amount_for_liquidity() {
 }
