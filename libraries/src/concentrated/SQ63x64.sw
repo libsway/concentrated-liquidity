@@ -146,7 +146,7 @@ impl core::ops::Subtract for SQ63x64 {
 impl SQ63x64 {
     /// Multiply a SQ63x64 with a SQ63x64. Panics of overflow.
     //TODO: assumes positive values
-    pub fn multiply(self, other: Self) -> Self {
+    fn multiply(self, other: Self) -> Self {
         let mask = 0x0fffffffffffffff; 
         let indent = 0x8000000000000000;
         // self.value = (self.value & mask) * (other.value & mask);
@@ -251,7 +251,7 @@ impl SQ63x64 {
         let half_scaling_unit = U128::from((0,1 << 63)) / two_u128;
         let mut delta = half_scaling_unit;
         // will perform 31 iterations
-        let zero = U128::from((0,1<<(62-62)));
+        let zero = U128::from((0,1<<(62-31)));
         while delta > zero {
             y = (y*y) / scaling_unit << 2; // this line is broken
             y = y << 1;

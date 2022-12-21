@@ -19,12 +19,12 @@ const _abi = {
       components: [
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
       ],
@@ -36,12 +36,12 @@ const _abi = {
       components: [
         {
           name: "__tuple_element",
-          type: 13,
+          type: 12,
           typeArguments: null,
         },
         {
           name: "__tuple_element",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
       ],
@@ -53,22 +53,22 @@ const _abi = {
       components: [
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "__tuple_element",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
       ],
@@ -97,7 +97,7 @@ const _abi = {
         },
         {
           name: "ContractId",
-          type: 9,
+          type: 8,
           typeArguments: null,
         },
       ],
@@ -117,48 +117,6 @@ const _abi = {
     },
     {
       typeId: 8,
-      type: "struct BurnEvent",
-      components: [
-        {
-          name: "pool",
-          type: 9,
-          typeArguments: null,
-        },
-        {
-          name: "sender",
-          type: 6,
-          typeArguments: null,
-        },
-        {
-          name: "token0_amount",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "token1_amount",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "liquidity_burned",
-          type: 15,
-          typeArguments: null,
-        },
-        {
-          name: "tick_lower",
-          type: 10,
-          typeArguments: null,
-        },
-        {
-          name: "tick_upper",
-          type: 10,
-          typeArguments: null,
-        },
-      ],
-      typeParameters: null,
-    },
-    {
-      typeId: 9,
       type: "struct ContractId",
       components: [
         {
@@ -170,12 +128,59 @@ const _abi = {
       typeParameters: null,
     },
     {
-      typeId: 10,
+      typeId: 9,
       type: "struct I24",
       components: [
         {
           name: "underlying",
+          type: 15,
+          typeArguments: null,
+        },
+      ],
+      typeParameters: null,
+    },
+    {
+      typeId: 10,
+      type: "struct InitEvent",
+      components: [
+        {
+          name: "pool_id",
+          type: 8,
+          typeArguments: null,
+        },
+        {
+          name: "token0",
+          type: 8,
+          typeArguments: null,
+        },
+        {
+          name: "token1",
+          type: 8,
+          typeArguments: null,
+        },
+        {
+          name: "swap_fee",
           type: 16,
+          typeArguments: null,
+        },
+        {
+          name: "tick_spacing",
+          type: 15,
+          typeArguments: null,
+        },
+        {
+          name: "init_price_upper",
+          type: 16,
+          typeArguments: null,
+        },
+        {
+          name: "init_price_lower",
+          type: 16,
+          typeArguments: null,
+        },
+        {
+          name: "init_tick",
+          type: 15,
           typeArguments: null,
         },
       ],
@@ -183,46 +188,46 @@ const _abi = {
     },
     {
       typeId: 11,
-      type: "struct InitEvent",
+      type: "struct MintEvent",
       components: [
         {
-          name: "pool_id",
-          type: 9,
+          name: "pool",
+          type: 8,
           typeArguments: null,
         },
         {
-          name: "token0",
-          type: 9,
+          name: "sender",
+          type: 6,
           typeArguments: null,
         },
         {
-          name: "token1",
-          type: 9,
+          name: "recipient",
+          type: 6,
           typeArguments: null,
         },
         {
-          name: "swap_fee",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "tick_spacing",
+          name: "token0_amount",
           type: 16,
           typeArguments: null,
         },
         {
-          name: "init_price_upper",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "init_price_lower",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "init_tick",
+          name: "token1_amount",
           type: 16,
+          typeArguments: null,
+        },
+        {
+          name: "liquidity_minted",
+          type: 14,
+          typeArguments: null,
+        },
+        {
+          name: "tick_lower",
+          type: 9,
+          typeArguments: null,
+        },
+        {
+          name: "tick_upper",
+          type: 9,
           typeArguments: null,
         },
       ],
@@ -230,46 +235,11 @@ const _abi = {
     },
     {
       typeId: 12,
-      type: "struct MintEvent",
+      type: "struct Q64x64",
       components: [
         {
-          name: "pool",
-          type: 9,
-          typeArguments: null,
-        },
-        {
-          name: "sender",
-          type: 6,
-          typeArguments: null,
-        },
-        {
-          name: "recipient",
-          type: 6,
-          typeArguments: null,
-        },
-        {
-          name: "token0_amount",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "token1_amount",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "liquidity_minted",
-          type: 15,
-          typeArguments: null,
-        },
-        {
-          name: "tick_lower",
-          type: 10,
-          typeArguments: null,
-        },
-        {
-          name: "tick_upper",
-          type: 10,
+          name: "value",
+          type: 14,
           typeArguments: null,
         },
       ],
@@ -277,23 +247,11 @@ const _abi = {
     },
     {
       typeId: 13,
-      type: "struct Q64x64",
-      components: [
-        {
-          name: "value",
-          type: 15,
-          typeArguments: null,
-        },
-      ],
-      typeParameters: null,
-    },
-    {
-      typeId: 14,
       type: "struct SwapEvent",
       components: [
         {
           name: "pool",
-          type: 9,
+          type: 8,
           typeArguments: null,
         },
         {
@@ -308,27 +266,44 @@ const _abi = {
         },
         {
           name: "token0_amount",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "token1_amount",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "liquidity",
-          type: 15,
+          type: 14,
           typeArguments: null,
         },
         {
           name: "tick",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "sqrt_price",
-          type: 13,
+          type: 12,
+          typeArguments: null,
+        },
+      ],
+      typeParameters: null,
+    },
+    {
+      typeId: 14,
+      type: "struct U128",
+      components: [
+        {
+          name: "upper",
+          type: 16,
+          typeArguments: null,
+        },
+        {
+          name: "lower",
+          type: 16,
           typeArguments: null,
         },
       ],
@@ -336,29 +311,12 @@ const _abi = {
     },
     {
       typeId: 15,
-      type: "struct U128",
-      components: [
-        {
-          name: "upper",
-          type: 17,
-          typeArguments: null,
-        },
-        {
-          name: "lower",
-          type: 17,
-          typeArguments: null,
-        },
-      ],
-      typeParameters: null,
-    },
-    {
-      typeId: 16,
       type: "u32",
       components: null,
       typeParameters: null,
     },
     {
-      typeId: 17,
+      typeId: 16,
       type: "u64",
       components: null,
       typeParameters: null,
@@ -374,17 +332,17 @@ const _abi = {
         },
         {
           name: "lower",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "upper",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "liquidity_amount",
-          type: 15,
+          type: 14,
           typeArguments: null,
         },
       ],
@@ -399,12 +357,12 @@ const _abi = {
       inputs: [
         {
           name: "tick_lower",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "tick_upper",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
       ],
@@ -455,27 +413,27 @@ const _abi = {
       inputs: [
         {
           name: "first_token",
-          type: 9,
+          type: 8,
           typeArguments: null,
         },
         {
           name: "second_token",
-          type: 9,
+          type: 8,
           typeArguments: null,
         },
         {
           name: "swap_fee",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "sqrt_price",
-          type: 13,
+          type: 12,
           typeArguments: null,
         },
         {
           name: "tick_spacing",
-          type: 16,
+          type: 15,
           typeArguments: null,
         },
       ],
@@ -490,32 +448,32 @@ const _abi = {
       inputs: [
         {
           name: "lower_old",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "lower",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "upper_old",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "upper",
-          type: 10,
+          type: 9,
           typeArguments: null,
         },
         {
           name: "amount0_desired",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
           name: "amount1_desired",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
         {
@@ -527,7 +485,7 @@ const _abi = {
       name: "mint",
       output: {
         name: "",
-        type: 15,
+        type: 14,
         typeArguments: null,
       },
     },
@@ -540,14 +498,14 @@ const _abi = {
         },
         {
           name: "amount_out",
-          type: 17,
+          type: 16,
           typeArguments: null,
         },
       ],
       name: "quote_amount_in",
       output: {
         name: "",
-        type: 17,
+        type: 16,
         typeArguments: null,
       },
     },
@@ -555,7 +513,7 @@ const _abi = {
       inputs: [
         {
           name: "price",
-          type: 13,
+          type: 12,
           typeArguments: null,
         },
       ],
@@ -570,7 +528,7 @@ const _abi = {
       inputs: [
         {
           name: "sqrt_price_limit",
-          type: 13,
+          type: 12,
           typeArguments: null,
         },
         {
@@ -582,7 +540,7 @@ const _abi = {
       name: "swap",
       output: {
         name: "",
-        type: 17,
+        type: 16,
         typeArguments: null,
       },
     },
@@ -592,7 +550,7 @@ const _abi = {
       logId: 0,
       loggedType: {
         name: "",
-        type: 8,
+        type: 10,
         typeArguments: [],
       },
     },
@@ -608,15 +566,7 @@ const _abi = {
       logId: 2,
       loggedType: {
         name: "",
-        type: 12,
-        typeArguments: [],
-      },
-    },
-    {
-      logId: 3,
-      loggedType: {
-        name: "",
-        type: 14,
+        type: 13,
         typeArguments: [],
       },
     },
