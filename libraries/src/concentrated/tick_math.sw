@@ -7,11 +7,27 @@ use ::Q64x64::{full_multiply, Q64x64};
 use ::Q128x128::Q128x128;
 use ::SQ63x64::SQ63x64;
 
-pub fn MAX_TICK() -> I24 {
-    return I24::max();
-}
 pub fn MIN_TICK() -> I24 {
-    return I24::min();
+    return I24::from_neg(443636);
+}
+pub fn MAX_TICK() -> I24 {
+    return I24::from_uint(436704);
+}
+pub fn MIN_SQRT_PRICE() -> Q64x64 {
+    Q64x64 {
+        value: U128 {
+            upper: 0,
+            lower: 1,
+        },
+    }
+}
+pub fn MAX_SQRT_PRICE() -> Q64x64 {
+    Q64x64 {
+        value: U128 {
+            upper: 9222860000000000000,
+            lower: 0,
+        },
+    }
 }
 
 impl U256 {
@@ -444,41 +460,23 @@ pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     };
 }
 
-pub fn MIN_SQRT_PRICE() -> Q64x64 {
-    Q64x64 {
-        value: U128 {
-            upper: 0,
-            lower: 0,
-        },
-    }
-}
-
-pub fn MAX_SQRT_PRICE() -> Q64x64 {
-    Q64x64 {
-        value: U128 {
-            upper: 0,
-            lower: 0,
-        },
-    }
-}
-
 pub fn get_tick_at_price(sqrt_price: Q64x64) -> I24 {
-    check_sqrt_price_bounds(sqrt_price);
-
+    //TODO: assert there will be no overflow with price bounds
     // square price
-    let mut price: SQ63x64 = SQ63x64::from_q64x64(sqrt_price * sqrt_price);
+    let mut price: SQ63x64 = SQ63x64 { value: (sqrt_price * sqrt_price).value };
 
     // base value for tick change -> 1.0001
-    let mut tick_base = SQ63x64 {
+    let tick_base_binary_log = SQ63x64 {
         value: U128 {
-            upper: 1,
-            lower: 429497 << 33, //approx. 1 bps
+            upper: 0,
+            lower: 2661169563308220, // log base 2 of 1 bps
         },
     };
 
     //TODO: should we round up? no because we always take the lower tick
     // change of base; log base 1.0001 (price) = log base 2 (price) / log base 2 (1.0001)
-    let log_base_tick_of_price: SQ63x64 = price.binary_log() / tick_base.binary_log();
+    let log_base_tick_of_price: SQ63x64 = price.binary_log() / tick_base_binary_log;
+
     let log_base_tick_of_price: I24 = log_base_tick_of_price.to_i24();
     // return base 1.0001 price
     log_base_tick_of_price

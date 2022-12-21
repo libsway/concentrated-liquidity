@@ -1,0 +1,567 @@
+{
+  "types": [
+    {
+      "typeId": 0,
+      "type": "()",
+      "components": [],
+      "typeParameters": null
+    },
+    {
+      "typeId": 1,
+      "type": "(_, _)",
+      "components": [
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 2,
+      "type": "(_, _)",
+      "components": [
+        {
+          "name": "__tuple_element",
+          "type": 12,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 9,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 3,
+      "type": "(_, _, _, _)",
+      "components": [
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 16,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 4,
+      "type": "b256",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 5,
+      "type": "bool",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 6,
+      "type": "enum Identity",
+      "components": [
+        {
+          "name": "Address",
+          "type": 7,
+          "typeArguments": null
+        },
+        {
+          "name": "ContractId",
+          "type": 8,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 7,
+      "type": "struct Address",
+      "components": [
+        {
+          "name": "value",
+          "type": 4,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 8,
+      "type": "struct ContractId",
+      "components": [
+        {
+          "name": "value",
+          "type": 4,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 9,
+      "type": "struct I24",
+      "components": [
+        {
+          "name": "underlying",
+          "type": 15,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 10,
+      "type": "struct InitEvent",
+      "components": [
+        {
+          "name": "pool_id",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "token0",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "token1",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "swap_fee",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "tick_spacing",
+          "type": 15,
+          "typeArguments": null
+        },
+        {
+          "name": "init_price_upper",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "init_price_lower",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "init_tick",
+          "type": 15,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 11,
+      "type": "struct MintEvent",
+      "components": [
+        {
+          "name": "pool",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "sender",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "token0_amount",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "token1_amount",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "liquidity_minted",
+          "type": 14,
+          "typeArguments": null
+        },
+        {
+          "name": "tick_lower",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "tick_upper",
+          "type": 9,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 12,
+      "type": "struct Q64x64",
+      "components": [
+        {
+          "name": "value",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 13,
+      "type": "struct SwapEvent",
+      "components": [
+        {
+          "name": "pool",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "sender",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "token0_amount",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "token1_amount",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "liquidity",
+          "type": 14,
+          "typeArguments": null
+        },
+        {
+          "name": "tick",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "sqrt_price",
+          "type": 12,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 14,
+      "type": "struct U128",
+      "components": [
+        {
+          "name": "upper",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "lower",
+          "type": 16,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 15,
+      "type": "u32",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 16,
+      "type": "u64",
+      "components": null,
+      "typeParameters": null
+    }
+  ],
+  "functions": [
+    {
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "lower",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "upper",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "liquidity_amount",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "name": "burn",
+      "output": {
+        "name": "",
+        "type": 3,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "tick_lower",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "tick_upper",
+          "type": 9,
+          "typeArguments": null
+        }
+      ],
+      "name": "collect",
+      "output": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [],
+      "name": "collect_protocol_fee",
+      "output": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [],
+      "name": "get_price_and_nearest_tick",
+      "output": {
+        "name": "",
+        "type": 2,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [],
+      "name": "get_protocol_fees",
+      "output": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [],
+      "name": "get_reserves",
+      "output": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "first_token",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "second_token",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "swap_fee",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "sqrt_price",
+          "type": 12,
+          "typeArguments": null
+        },
+        {
+          "name": "tick_spacing",
+          "type": 15,
+          "typeArguments": null
+        }
+      ],
+      "name": "init",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "lower_old",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "lower",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "upper_old",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "upper",
+          "type": 9,
+          "typeArguments": null
+        },
+        {
+          "name": "amount0_desired",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "amount1_desired",
+          "type": 16,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient",
+          "type": 6,
+          "typeArguments": null
+        }
+      ],
+      "name": "mint",
+      "output": {
+        "name": "",
+        "type": 14,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "token_zero_to_one",
+          "type": 5,
+          "typeArguments": null
+        },
+        {
+          "name": "amount_out",
+          "type": 16,
+          "typeArguments": null
+        }
+      ],
+      "name": "quote_amount_in",
+      "output": {
+        "name": "",
+        "type": 16,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "price",
+          "type": 12,
+          "typeArguments": null
+        }
+      ],
+      "name": "set_price",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      }
+    },
+    {
+      "inputs": [
+        {
+          "name": "sqrt_price_limit",
+          "type": 12,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient",
+          "type": 6,
+          "typeArguments": null
+        }
+      ],
+      "name": "swap",
+      "output": {
+        "name": "",
+        "type": 16,
+        "typeArguments": null
+      }
+    }
+  ],
+  "loggedTypes": [
+    {
+      "logId": 0,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": 1,
+      "loggedType": {
+        "name": "",
+        "type": 11,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": 2,
+      "loggedType": {
+        "name": "",
+        "type": 13,
+        "typeArguments": []
+      }
+    }
+  ]
+}
