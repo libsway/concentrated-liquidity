@@ -3,7 +3,7 @@ library swap_lib;
 use ::Q64x64::*;
 use ::Q128x128::*;
 use std::u128::U128;
-use core::num::*;
+use core::primitives::*;
 use ::full_math::*;
 
 pub fn handle_fees(

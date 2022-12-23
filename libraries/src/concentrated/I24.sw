@@ -1,6 +1,6 @@
 library I24;
 
-use core::num::*;
+use core::primitives::*;
 use std::assert::assert;
 
 /// The 24-bit signed integer type.

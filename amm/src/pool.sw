@@ -1,6 +1,6 @@
 contract;
 
-use core::num::*;
+use core::primitives::*;
 use std::{
     revert::require,
     identity::*,
