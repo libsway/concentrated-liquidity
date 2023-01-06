@@ -1,5 +1,11 @@
 contract;
 
+dep events;
+dep errors;
+
+use errors::ConcentratedLiquidityPoolErrors;
+use events::{BurnEvent, InitEvent, SwapEvent, MintEvent, FlashEvent};
+
 use core::primitives::*;
 use std::{
     revert::require,
@@ -25,22 +31,6 @@ use cl_libs::tick_math::*;
 use cl_libs::full_math::*;
 use cl_libs::swap_lib::*;
 
-//TODO: implement these in pool.sw
-pub enum ConcentratedLiquidityPoolErrors {
-    Locked: (),
-    ZeroAddress: (),
-    InvalidToken: (),
-    InvalidSwapFee: (),
-    LiquidityOverflow: (),
-    Token0Missing: (),
-    Token1Missing: (),
-    InvalidTick: (),
-    LowerEven: (),
-    UpperOdd: (),
-    MaxTickLiquidity: (),
-    Overflow: (),
-}
-
 impl core::ops::Ord for ContractId {
     fn lt(self, other: Self) -> bool {
         self.value < other.value
@@ -57,54 +47,6 @@ impl u64 {
             lower: self
         }
     }
-}
-
-struct InitEvent {
-    pool_id: ContractId,
-    token0: ContractId,
-    token1: ContractId,
-    swap_fee: u64,
-    tick_spacing: u32,
-    init_price_upper: u64,
-    init_price_lower: u64,
-    init_tick: u32
-}
-
-struct SwapEvent {
-    pool: ContractId,
-    sender: Identity,
-    recipient: Identity,
-    token0_amount: u64,
-    token1_amount: u64,
-    liquidity: U128,
-    tick: I24,
-    sqrt_price: Q64x64
-}
-
-struct MintEvent {
-    pool: ContractId,
-    sender: Identity,
-    recipient: Identity,
-    token0_amount: u64,
-    token1_amount: u64,
-    liquidity_minted: U128,
-    tick_lower: I24,
-    tick_upper: I24
-}
-
-struct BurnEvent {
-    pool: ContractId,
-    sender: Identity,
-    token0_amount: u64,
-    token1_amount: u64,
-    liquidity_burned: U128,
-    tick_lower: I24,
-    tick_upper: I24
-}
-
-struct FlashEvent {
-    fee_growth_global0: Q64x64,
-    fee_growth_global1: Q64x64
 }
 
 struct Position {
@@ -160,7 +102,6 @@ abi ConcentratedLiquidityPool {
 
 // Should be all storage variables
 storage { 
-
     token0: ContractId = ContractId{value:0x0000000000000000000000000000000000000000000000000000000000000000},
     token1: ContractId = ContractId{value:0x0000000000000000000000000000000000000000000000000000000000000000},
 
@@ -196,9 +137,9 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(first_token: ContractId, second_token: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
-        assert(swap_fee <= storage.max_fee);
-        assert(first_token != second_token);
+        require(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}}, ConcentratedLiquidityPoolErrors::AlreadyInitialized);
+        require(swap_fee <= storage.max_fee, ConcentratedLiquidityPoolErrors::InvalidSwapFee);
+        require(first_token != second_token, ConcentratedLiquidityPoolErrors::InvalidToken);
         storage.token0 = if first_token < second_token { first_token }  else { second_token };
         storage.token1 = if first_token < second_token { second_token } else { first_token };
         storage.nearest_tick = get_tick_at_price(sqrt_price);
@@ -220,12 +161,11 @@ impl ConcentratedLiquidityPool for Contract {
     }
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
-
         // sanity checks
         assert(msg_amount() > 0);
         let token0 = storage.token0;
         let token1 = storage.token1;
-        assert(msg_asset_id() == token0 || msg_asset_id() == token1);
+        require(msg_asset_id() == token0 || msg_asset_id() == token1, ConcentratedLiquidityPoolErrors::InvalidToken);
         let amount = msg_amount();
         let token_zero_to_one = if msg_asset_id() == token0 { true } else { false };
         let mut current_price = storage.sqrt_price;

@@ -1,6 +1,6 @@
-# 🌴 Exeguttor AMM 🪓
+# 🍍🌴 Exeggutor AMM 🍍🌴
 
-The Executor AMM is a reference implementation of Concentrated Liquidity in Sway. To run on the FuelVM many modifications had to be made, specifically around the typing of many variables. The design expectation of this AMM is that tokens on the FuelVM would use 8 decimal precision, and store balances in a `u64`.
+The Exeggutor AMM is a reference implementation of Concentrated Liquidity in Sway. To run on the FuelVM many modifications had to be made, specifically around the typing of many variables. The design expectation of this AMM is that tokens on the FuelVM would use 8 decimal precision, and store balances in a `u64`.
 
 ## Type Table
 
@@ -14,7 +14,7 @@ This Table keep tracks of which types which changed and why
 
 ## Library Reference
 
-Exeggutor requires many new additions of libraries to be built, and so docs and descriptions of each of these libraries are included below.
+Exeggutor required the construction of many different libraries to facilitate concentrated-liquidity, of which these are based off a mix of various concentrated liquidity libraries from Solidity.
 
 ### dydx_math
 
