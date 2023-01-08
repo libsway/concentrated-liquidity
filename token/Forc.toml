@@ -1,0 +1,7 @@
+[project]
+authors = ["ControlCplusControlV"]
+entry = "token.sw"
+license = "Apache-2.0"
+name = "token"
+
+[dependencies]
