@@ -29,7 +29,7 @@ async fn test_initialize_pool() {
 
     // Price assumes an implicit reserve of 100,000,000 A tokens and 10,000,000 B tokens
     // According the formula sqrt(reserve0 * reserve1) * 2**64
-    let price = Q64x64{value : U128{upper : 31622776, lower : 0}};
+    let price = Q64x64{value : U128{upper : 3, lower : 0}};
 
     let (token_a, token_a_id) = get_test_token_instance(wallet.clone()).await;
     let (token_b, token_b_id) = get_test_token_instance(wallet).await;
