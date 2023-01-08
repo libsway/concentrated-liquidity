@@ -3,15 +3,16 @@ use fuels::tx::ConsensusParameters;
 use fuel_chain_config::ChainConfig;
 use fuel_chain_config::CoinConfig;
 use fuel_chain_config::StateConfig;
+use exeguttor_mod::Q64x64;
 
 abigen!(
-    ExeguttorTests,
-    "./amm_tests/out/debug/tests-abi.json"
+    Exeguttor,
+    "./amm/out/debug/amm-abi.json"
 );
 
 
 #[tokio::test]
-async fn sq63x64() {
+async fn test_initialize_pool() {
     let mut wallet = WalletUnlocked::new_random(None);
     let num_assets = 1; 
     let coins_per_asset = 100;
@@ -68,36 +69,33 @@ async fn sq63x64() {
 
     let (contract_instance, _id) = get_test_contract_instance(wallet).await;
 
-    let result = contract_instance.methods()
-        .test_dydx_math()
-            .tx_params(my_tx_params)
-            .call()
-            .await
-            .unwrap()
-            .value;
+    // Price assumes an implicit reserve of 100,000,000 A tokens and 10,000,000 B tokens
+    // According the formula sqrt(reserve0 * reserve1) * 2**64
+    let price = Q64x64{value : U128{upper : 31622776, lower : 0}};
 
-    println!("{}", result);
+    contract_instance.methods()
+        .init(ContractId::from([0; 32]), ContractId::from([1; 32]), 500, price, 10).call().await.unwrap().value;
 
-    assert!(result != result);
+    // Call will fail on previous unwrap if instatiation doesn't work
 }
 
 async fn get_test_contract_instance(
     wallet: WalletUnlocked,
-) -> (ExeguttorTests, Bech32ContractId) {
+) -> (Exeguttor, Bech32ContractId) {
     
     let id = Contract::deploy(
-        "./amm_tests/out/debug/tests.bin",
+        "./amm/out/debug/amm.bin",
         &wallet,
         TxParameters::default(),
         StorageConfiguration::with_storage_path(Some(
-            "./amm_tests/out/debug/tests-storage_slots.json"
+            "./amm/out/debug/amm-storage_slots.json"
                 .to_string(),
         )),
     )
     .await
     .unwrap();
 
-    let instance = ExeguttorTests::new(id.clone(), wallet);
+    let instance = Exeguttor::new(id.clone(), wallet);
 
     (instance, id)
 }
