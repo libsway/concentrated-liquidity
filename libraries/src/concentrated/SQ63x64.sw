@@ -6,6 +6,7 @@ use ::Q64x64::Q64x64;
 use ::Q128x128::Q128x128;
 use core::primitives::*;
 use std::{revert::require, math::*, revert::revert, u128::*, u256::*};
+use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 
 pub struct SQ63x64 {
     value: U128,
@@ -70,7 +71,7 @@ impl SQ63x64 {
         }
     }
     fn from_q128x128(_value: Q128x128) -> Self {
-        require(_value.value.a == 0, SQ63x64Error::Overflow);
+        require(_fvalue.value.a == 0, SQ63x64Error::Overflow);
         require(_value.value.a < Self::indent() || _value.value.a == Self::indent(), SQ63x64Error::Overflow);
         Self {
             value: U128 {

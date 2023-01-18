@@ -21,6 +21,13 @@ fn log2(number: u64) -> u64 {
     }
 }
 
+#[test]
+pub fn full_math_log2() -> (u64) {
+    let result = log2(9);
+    assert(result == 3);
+    result
+}
+
 pub fn msb_idx(input: U256) -> u32 {
     let mut msb_idx: u32 = 0;
     if input.a > 0 {
@@ -36,6 +43,13 @@ pub fn msb_idx(input: U256) -> u32 {
         msb_idx += log2(input.d);
     }
     msb_idx
+}
+
+#[test]
+pub fn full_math_msb_idx() -> (u64) {
+    let result = msb_idx(U256::from((0,0,0,2)));
+    assert(result == 2);
+    result
 }
 
 impl U256 {
@@ -207,6 +221,14 @@ pub fn mul_div_u64(base: u64, factor: u64, denominator: u64) -> u64 {
     }
     res.lower
 }
+
+#[test]
+pub fn full_math_mul_div_u64() -> (u64) {
+    let result = mul_div_u64(9, 6, 6);
+    assert(result == 9);
+    result
+}
+
 pub fn mul_div_rounding_up_u64(base: u64, factor: u64, denominator: u64) -> u64 {
     let base = U128 {
         upper: 0,
@@ -237,7 +259,15 @@ pub fn mul_div_rounding_up_u64(base: u64, factor: u64, denominator: u64) -> u64 
 
     result
 }
-pub fn mul_div_rounding_up(base: U128, factor: U128, denominator: U128) -> U128 {
+
+#[test]
+pub fn full_math_mul_div_rounding_up_u64() -> (u64) {
+    let result = mul_div_rounding_up_u64(3, 1, 2);
+    assert(result == 2);
+    result
+}
+
+pub fn mul_div_rounding_up_u128(base: U128, factor: U128, denominator: U128) -> U128 {
     let base_u256 = U256 {
         a: 0,
         b: 0,
@@ -274,6 +304,14 @@ pub fn mul_div_rounding_up(base: U128, factor: U128, denominator: U128) -> U128 
         lower: res_u256.d,
     }
 }
+
+#[test]
+pub fn full_math_mul_div_rounding_up_u128() -> (U128) {
+    let result = mul_div_rounding_up_u128(U128::from((0,3)), U128::from((0,2)), U128::from((0,4)));
+    assert(result == U128::from((0,2)));
+    result
+}
+
 pub fn mul_div_u256(base: U256, factor: U128, denominator: U128) -> U128 {
     let base_u256 = base;
     let factor_u256 = U256 {
@@ -299,6 +337,15 @@ pub fn mul_div_u256(base: U256, factor: U128, denominator: U128) -> U128 {
         lower: res_u256.d,
     }
 }
+
+#[test]
+pub fn mul_div_u256() -> (U128) {
+    let result = mul_div_u256(U256::from((0,3)), U128::from((0,2)), U128::from((0,4)));
+    assert(result == U128::from((0,2)));
+    result
+}
+
+
 pub fn mul_div_rounding_up_u256(base: U256, factor: U128, denominator: U128) -> U128 {
     let base_u256 = base;
     let factor_u256 = U256 {
@@ -332,6 +379,13 @@ pub fn mul_div_rounding_up_u256(base: U256, factor: U128, denominator: U128) -> 
     res_128
 }
 
+#[test]
+pub fn mul_div_rounding_up_u256() -> (U128) {
+    let result = mul_div_rounding_up_u256(U256::from((0,3)), U128::from((0,2)), U128::from((0,4)));
+    assert(result == U128::from((0,2)));
+    result
+}
+
 pub fn mul_div_q64x64(base: Q128x128, factor: Q128x128, denominator: Q128x128) -> Q64x64 {
     let mut res: Q128x128 = (base * factor) / denominator;
     if (res.value.a != 0) || (res.value.b != 0) {
@@ -344,6 +398,13 @@ pub fn mul_div_q64x64(base: Q128x128, factor: Q128x128, denominator: Q128x128) -
             lower: res.value.c,
         },
     }
+}
+
+#[test]
+pub fn mul_div_q64x64() -> (Q64x64) {
+    let result = mul_div_rounding_up_u256(Q128{value: U256::from((0,3))}, Q128{U128::from((0,2))}, Q128{U128::from((0,4))});
+    assert(result.value == U256::from((0,0,0,1)));
+    result
 }
 
 pub fn mul_div_rounding_up_q64x64(
@@ -375,34 +436,8 @@ pub fn mul_div_rounding_up_q64x64(
 }
 
 #[test]
-fn full_math_mul_div_u64() {
+pub fn mul_div_rounding_up_q64x64() -> (Q64x64) {
+    let result = image.png(Q128x128{value: U256::from((0,3))}, Q128x128{value: U128::from((0,2))}, Q128x128{value: U128::from((0,4))});
+    assert(result.value == U256::from((0,0,0,2)));
+    result
 }
-
-#[test]
-fn full_math_mul_div() {
-}
-
-#[test]
-fn full_math_mul_div_rounding_up_u64() {
-}
-
-#[test]
-fn full_math_mul_div_rounding_up() {
-}
-
-#[test]
-fn full_math_mul_div_u256() {
-}
-
-#[test]
-fn full_math_mul_div_rounding_up_u256() {
-}
-
-#[test]
-fn full_math_mul_div_q64x64() {
-}
-
-#[test]
-fn full_math_mul_div_rounding_up_q64x64() {
-}
-
