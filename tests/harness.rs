@@ -81,7 +81,7 @@ async fn sq63x64() {
         .collect::<Vec<_>>();
 
     // In order: gas_price, gas_limit, and maturity
-    let my_tx_params = TxParameters::new(None, Some(1_000_000_000), None);
+    let tx_params = TxParameters::new(None, Some(1_000_000_000), None);
 
     let consensus_parameters_config =
         ConsensusParameters::DEFAULT
@@ -98,7 +98,7 @@ async fn sq63x64() {
         block_gas_limit: 1_000_000_000_000,
         transaction_parameters: consensus_parameters_config,
         ..Default::default()
-        };
+    };
 
     let node_config = Config::local_node();
     let (fuel_client, _socket_addr) = setup_test_client(
@@ -114,26 +114,29 @@ async fn sq63x64() {
 
     let result = test_contract_instance.methods()
         .test_get_tick_at_price()
-            .tx_params(my_tx_params)
+            .tx_params(tx_params)
             .call()
             .await
             .unwrap()
             .value;
 
+    println!("tick index for price of 3.00:");                     
     println!("{}", result.underlying);
+    
     // let result = contract_instance.methods()
     //     .test_most_sig_bit_idx()
-    //         .tx_params(my_tx_params)
+    //         .tx_params(tx_params)
     //         .call()
     //         .await
     //         .unwrap()
     //         .value;
 
+    
     // println!("{}", result);
 
     // let result = contract_instance.methods()
     //     .test_binary_log()
-    //         .tx_params(my_tx_params)
+    //         .tx_params(tx_params)
     //         .call()
     //         .await
     //         .unwrap()
@@ -146,7 +149,7 @@ async fn sq63x64() {
 
     // let result = contract_instance.methods()
     //     .test_abs_u128()
-    //         .tx_params(my_tx_params)
+    //         .tx_params(tx_params)
     //         .call()
     //         .await
     //         .unwrap()
@@ -156,7 +159,7 @@ async fn sq63x64() {
 
     // let result = contract_instance.methods()
     // .test_get_tick_at_price()
-    //     .tx_params(my_tx_params)
+    //     .tx_params(tx_params)
     //     .call()
     //     .await
     //     .unwrap()
