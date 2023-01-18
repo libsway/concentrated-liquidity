@@ -47,22 +47,11 @@ impl ExeguttorTests for Contract {
     }  
 
     fn test_binary_log() -> SQ63x64 {
-        let mut sqrt_price = Q64x64{value: U128::from((1,0))};
-        // sqrt_price * sqrt_price;
-        // SQ63x64{value: U128::from((0,0))}
-
-        let mut price = SQ63x64{value: (sqrt_price * sqrt_price).value };
-        price.binary_log();
-        SQ63x64{value: (sqrt_price * sqrt_price).value }
-        // let mut test_number1 = Q64x64{value: U128::from((2,1<<63))};
-        // let mut test_number2 = Q64x64{value: U128::from((2,1<<63))};
-        // SQ63x64{value: (test_number1 * test_number2).value}
-        // let result = test_number1.binary_log() / test_number2.binary_log();
-        // let result = test_number2.binary_log();
-        // result
-        // let mut test_number1 = SQ63x64{value: U128::from((0,12297829382473034410))};
-        // let mut test_number2 = SQ63x64{value: U128::from((1,1 << 63))};
-        // test_number2/test_number1
+        let mut test_number1 = SQ63x64{value: U128::from((2,1<<63))};
+        let mut test_number2 = SQ63x64{value: U128::from((2,1<<63))};
+        let result = test_number1.binary_log() / test_number2.binary_log();
+        let result = test_number2.binary_log();
+        result
     }
 
     fn test_get_tick_at_price() -> I24 {
@@ -70,11 +59,5 @@ impl ExeguttorTests for Contract {
 
         let mut result = get_tick_at_price(test_number1);
         result
-        // let mut sqrt_price = Q64x64{value: U128::from((1,0))};
-        // // sqrt_price * sqrt_price;
-        // // SQ63x64{value: U128::from((0,0))}
-
-        // let mut price = SQ63x64{value: (sqrt_price * sqrt_price).value };
-        // price.binary_log().to_i24()
     }
 }

@@ -4,7 +4,6 @@ library SQ63x64;
 use ::I24::I24;
 use ::Q64x64::Q64x64;
 use ::Q128x128::Q128x128;
-use core::primitives::*;
 use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 
 pub struct SQ63x64 {
