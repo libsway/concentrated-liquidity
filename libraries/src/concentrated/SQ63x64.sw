@@ -71,7 +71,7 @@ impl SQ63x64 {
         }
     }
     fn from_q128x128(_value: Q128x128) -> Self {
-        require(_fvalue.value.a == 0, SQ63x64Error::Overflow);
+        require(_value.value.a == 0, SQ63x64Error::Overflow);
         require(_value.value.a < Self::indent() || _value.value.a == Self::indent(), SQ63x64Error::Overflow);
         Self {
             value: U128 {
