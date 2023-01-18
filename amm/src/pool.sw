@@ -161,15 +161,15 @@ impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
         // sanity checks
-        assert(msg_amount() > 0);
+        require(msg_amount() > 0, ConcentratedLiquidityPoolErrors:ZeroAmount);
         let token0 = storage.token0;
         let token1 = storage.token1;
         require(msg_asset_id() == token0 || msg_asset_id() == token1, ConcentratedLiquidityPoolErrors::InvalidToken);
         let amount = msg_amount();
         let token_zero_to_one = if msg_asset_id() == token0 { true } else { false };
         let mut current_price = storage.sqrt_price;
-        if token_zero_to_one { assert(current_price < sqrt_price_limit) }
-        else                 { assert(current_price > sqrt_price_limit) }
+        if token_zero_to_one { require(sqrt_price_limit > current_price, ConcentratedLiquidityPoolErrors::PriceLimitExceeded) }
+        else                 { require(sqrt_price_limit < current_price,  ConcentratedLiquidityPoolErrors::PriceLimitExceeded) }
 
         // constants
         let one_e_6_u128 = U128{upper: 0, lower: 1000000};
@@ -409,7 +409,7 @@ impl ConcentratedLiquidityPool for Contract {
                 }
             }
             current_price = next_tick_price;
-            assert(next_tick_to_cross != next_tick);
+            if(next_tick_to_cross != next_tick) break;
             next_tick_to_cross = next_tick;
         }
          
@@ -596,7 +596,7 @@ fn _ensure_tick_spacing(upper: I24, lower: I24) -> Result<(), ConcentratedLiquid
 #[storage(read, write)]
 fn _update_position(owner: Identity, lower: I24, upper: I24, amount: U128, add_liquidity: bool) -> (u64, u64) {
     let mut position = storage.positions.get((owner, lower, upper));
-    assert(add_liquidity || (amount < position.liquidity || amount == position.liquidity));
+    require(add_liquidity || (amount < position.liquidity || amount == position.liquidity), FullMathError::Overflow);
     let (range_fee_growth0, range_fee_growth1) = range_fee_growth(lower, upper);
     
     let amount0_fees = 
@@ -816,9 +816,9 @@ fn tick_insert(
     prev_above: I24, prev_below: I24
 ) -> I24 {
     // check inputs
-    assert(below < above);
-    assert(below > MIN_TICK() || below == MIN_TICK());
-    assert(above < MAX_TICK() || above == MAX_TICK());
+    require(below < above);
+    require(below > MIN_TICK() || below == MIN_TICK());
+    require(above < MAX_TICK() || above == MAX_TICK());
     
     let mut below_tick = storage.ticks.get(below);
     let mut nearest = storage.nearest_tick;
@@ -834,8 +834,8 @@ fn tick_insert(
         let below_next = if above < prev_tick.next_tick { above } else { prev_tick.next_tick };
 
         // check below ordering
-        assert(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK());
-        assert(prev_below < below && below < prev_above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK());
+        require(prev_below < below && below < prev_above);
         
         if below < nearest || below == nearest {
             storage.ticks.insert(below, Tick {
@@ -870,9 +870,9 @@ fn tick_insert(
         let mut prev_next = prev_tick.next_tick;
 
         // check above order
-        assert(prev_tick.liquidity != (U128{upper: 0, lower: 0}));
-        assert(prev_next > above);
-        assert(prev_above < above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}));
+        require(prev_next > above);
+        require(prev_above < above);
 
         let above_prev = if prev_tick.prev_tick < below { below } else { prev_above };
 

@@ -458,7 +458,16 @@
         "name": "",
         "type": 3,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -478,7 +487,16 @@
         "name": "",
         "type": 1,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -487,7 +505,16 @@
         "name": "",
         "type": 1,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -496,7 +523,15 @@
         "name": "",
         "type": 2,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -505,7 +540,15 @@
         "name": "",
         "type": 1,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -514,7 +557,15 @@
         "name": "",
         "type": 1,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -549,7 +600,16 @@
         "name": "",
         "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -594,7 +654,16 @@
         "name": "",
         "type": 16,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -614,7 +683,15 @@
         "name": "",
         "type": 18,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -629,7 +706,16 @@
         "name": "",
         "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -649,7 +735,16 @@
         "name": "",
         "type": 18,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     }
   ],
   "loggedTypes": [
@@ -717,5 +812,7 @@
         "typeArguments": []
       }
     }
-  ]
+  ],
+  "messagesTypes": [],
+  "configurables": []
 }

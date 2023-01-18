@@ -192,9 +192,9 @@ storage {
 impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn init(first_token: ContractId, second_token: ContractId, swap_fee: u64, sqrt_price: Q64x64, tick_spacing: u32) {
-        assert(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
-        assert(swap_fee <= storage.max_fee);
-        assert(first_token != second_token);
+        require(storage.sqrt_price == Q64x64{value: U128{upper:0,lower:0}});
+        require(swap_fee <= storage.max_fee);
+        require(first_token != second_token);
         storage.token0 = if first_token < second_token { first_token }  else { second_token };
         storage.token1 = if first_token < second_token { second_token } else { first_token };
         storage.nearest_tick = get_tick_at_price(sqrt_price);
@@ -218,10 +218,10 @@ impl ConcentratedLiquidityPool for Contract {
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
 
         // sanity checks
-        assert(msg_amount() > 0);
+        require(msg_amount() > 0);
         let token0 = storage.token0;
         let token1 = storage.token1;
-        assert(msg_asset_id() == token0 || msg_asset_id() == token1);
+        require(msg_asset_id() == token0 || msg_asset_id() == token1);
         let amount = msg_amount();
         let token_zero_to_one = if msg_asset_id() == token0 { true } else { false };
 

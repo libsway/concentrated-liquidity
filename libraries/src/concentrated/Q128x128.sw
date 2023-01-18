@@ -1,8 +1,15 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q128x128;
 
-use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
+use core::primitives::*;
+use std::{revert::require, math::*, revert::revert, u128::*, u256::*};
 use ::I24::I24;
+
+pub enum Q128x128Error {
+    DivisionByZero: (),
+    Overflow: (),
+    Underflow: (),
+}
 
 pub struct Q128x128 {
     value: U256,
@@ -56,7 +63,7 @@ impl core::ops::Subtract for Q128x128 {
     /// Subtract a Q128x128 from a Q128x128. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value > other.value || self.value == other.value);
+        require(self.value > other.value || self.value == other.value, Q128x128Error::Underflow);
         Self {
             value: self.value - other.value,
         }
@@ -85,6 +92,12 @@ impl core::ops::Multiply for Q128x128 {
 impl core::ops::Divide for Q128x128 {
     /// Divide a Q128x128 by a Q128x128. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
+        require(divisor.value != U256 {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+        }, Q128x128Error::DivisionByZero);
         let int = self.value / U256 {
             a: divisor.value.a,
             b: divisor.value.b,
@@ -172,8 +185,8 @@ pub fn most_sig_bit_idx(value: U256) -> u64 {
 }
 
 pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
-    let value_idx = msb_idx / 64;
-    let msb_mod   = (msb_idx + 1) % 64;
+    let value_idx = msb_idx / 64u8;
+    let msb_mod   = (msb_idx + 1u8) % 64u8;
 
     let first_val: u64 = 0; let second_val: u64 = 0;
 
@@ -185,7 +198,7 @@ pub fn most_sig_bits(value: U256, msb_idx: u8) -> u64 {
         _ => return 0,
     };
 
-    if msb_mod == 0 || value_idx == 0 {
+    if msb_mod == 0u32 || value_idx == 0u32 {
         return first_val;
     }
 

@@ -1,6 +1,7 @@
 library I24;
 
-use std::assert::assert;
+use core::primitives::*;
+use std::revert::require;
 
 /// The 24-bit signed integer type.
 /// Represented as an underlying u32 value.
@@ -8,6 +9,11 @@ use std::assert::assert;
 /// Max value is 2 ^ 24 - 1, min value is - 2 ^ 24
 pub struct I24 {
     underlying: u32,
+}
+
+pub enum I24Error {
+    Overflow: (),
+    DivisionByZero: (),
 }
 
 pub trait From {
@@ -18,7 +24,7 @@ pub trait From {
 impl From<u32> for I24 {
     /// Helper function to get a signed number from with an underlying
     fn from(underlying: u32) -> I24 {
-        assert(underlying < 16777216u32);
+        require(underlying < 16777216u32, I24Error::Overflow);
         I24 { underlying }
     }
 
@@ -76,7 +82,7 @@ impl I24 {
     pub fn min() -> I24 {
         // Return 0u32 which is actually −8,388,608
         I24 {
-            underlying: 0,
+            underlying: 0u32,
         }
     }
     /// The largest value that can be represented by this type,
@@ -100,7 +106,7 @@ impl I24 {
     pub fn from_uint(value: u32) -> I24 {
         // as the minimal value of I24 is 2147483648 (1 << 31) we should add I24::indent() (1 << 31) 
         let underlying: u32 = value;
-        assert(underlying < 8388608u32);
+        require(underlying < 8388608u32, I24Error::Overflow);
         I24 { underlying }
     }
     pub fn from_uint_bool(value: u32, is_neg: bool) -> I24 {
@@ -111,7 +117,7 @@ impl I24 {
             };
         } else {
             let underlying: u32 = value;
-            assert(underlying < 8388608u32);
+            require(underlying < 8388608u32, I24Error::Overflow);
             return I24 { underlying };
         }
     }
@@ -174,7 +180,7 @@ impl core::ops::Multiply for I24 {
         }
 
         // Overflow protection
-        assert((res < Self::max()) || (res == Self::max()));
+        require((res < Self::max()) || (res == Self::max()), I24Error::Overflow);
 
         res
     }
@@ -183,7 +189,7 @@ impl core::ops::Multiply for I24 {
 impl core::ops::Divide for I24 {
     /// Divide a I24 by a I24. Panics if divisor is zero.
     fn divide(self, divisor: Self) -> Self {
-        assert(divisor != Self::new());
+        require(divisor != Self::new(), I24Error::DivisionByZero);
         let mut res = Self::new();
         if self.underlying >= Self::indent()
             && divisor.underlying > Self::indent()

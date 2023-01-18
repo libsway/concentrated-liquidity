@@ -1,9 +1,15 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q64x64;
 
-use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
+use core::primitives::*;
+use std::{revert::require, math::*, revert::revert, u128::*, u256::*};
 
 use ::Q128x128::Q128x128;
+
+pub enum Q64x64Error {
+    DivisionByZero: (),
+    SubtractionUnderflow: (),
+}
 
 pub struct Q64x64 {
     value: U128,
@@ -73,7 +79,7 @@ impl core::ops::Subtract for Q64x64 {
     /// Subtract a Q64x64 from a Q64x64. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value >= other.value);
+        require(self.value >= other.value, Q64x64Error::SubtractionUnderflow);
         Self {
             value: self.value - other.value,
         }
@@ -194,7 +200,7 @@ impl core::ops::Mod for U128 {
             upper: 0,
             lower: 1,
         };
-        assert(divisor != zero);
+        require(divisor != zero, Q64x64Error::DivisionByZero);
         let mut quotient = U128::new();
         let mut remainder = U128::new();
         let mut i = 128 - 1;
