@@ -1,7 +1,6 @@
 // Copied from https://github.com/FuelLabs/sway-libs/pull/32
 library Q64x64;
 
-use core::primitives::*;
 use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 
 use ::Q128x128::Q128x128;

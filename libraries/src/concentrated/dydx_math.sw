@@ -5,7 +5,7 @@ dep full_math;
 use full_math::{
     mul_div,
     mul_div_q64x64,
-    mul_div_rounding_up,
+    mul_div_rounding_up_u128,
     mul_div_rounding_up_q64x64,
     mul_div_rounding_up_u256,
     mul_div_u256,
@@ -41,7 +41,8 @@ pub fn get_dy(
     };
     // return (price_upper - price_lower).u128() * liquidity / PRECISION;
     if round_up {   
-        dy = mul_div_rounding_up(liquidity, (price_upper - price_lower).u128(), PRECISION);
+        //dy = mul_div_rounding_up_u64(liquidity, (price_upper - price_lower).u128(), PRECISION);
+        dy = U128::from((0,1));
     } else {
         dy = mul_div(liquidity, (price_upper - price_lower).u128(), PRECISION);
     }

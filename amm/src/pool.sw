@@ -6,7 +6,6 @@ dep errors;
 use errors::ConcentratedLiquidityPoolErrors;
 use events::{BurnEvent, InitEvent, SwapEvent, MintEvent, FlashEvent};
 
-use core::primitives::*;
 use std::{
     revert::require,
     identity::*,

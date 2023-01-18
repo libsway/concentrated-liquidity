@@ -3,9 +3,8 @@ library swap_lib;
 use ::Q64x64::*;
 use ::Q128x128::*;
 use std::u128::U128;
-use core::primitives::*;
 use ::full_math::*;
-
+    
 pub fn handle_fees(
     output: u64,
     swap_fee: u32,
@@ -19,7 +18,8 @@ pub fn handle_fees(
         upper: 0,
         lower: u64::max(),
     };
-    let mut fee_amount: u64 = mul_div_rounding_up_u64(output, swap_fee, 100000); // precision on swap_fee
+    // let mut fee_amount: u64 = mul_div_rounding_up_u64(output, swap_fee, 100000); // precision on swap_fee
+    let mut fee_amount = 0;
     let mut total_fee_amount = total_fee_amount;
     let mut amount_out = amount_out;
     let mut protocol_fee = protocol_fee;
@@ -44,4 +44,5 @@ pub fn handle_fees(
 
 #[test]
 fn test_handle_fees() {
+    
 }
