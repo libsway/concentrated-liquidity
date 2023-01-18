@@ -7,9 +7,10 @@ use ::Q64x64::{full_multiply, Q64x64};
 use ::Q128x128::Q128x128;
 use ::SQ63x64::SQ63x64;
 
-pub enum TickMathError {
+pub enum TickMathErrors {
     PriceTooHigh: (),
     PriceTooLow: (),
+    LiquidityUnderflow: ()
 }
 
 pub fn MIN_TICK() -> I24 {
@@ -44,8 +45,8 @@ impl U256 {
 }
 
 pub fn check_sqrt_price_bounds(sqrt_price: Q64x64) {
-    require(sqrt_price < MIN_SQRT_PRICE(), TickMathError::PriceTooLow);
-    require(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE(), TickMathError::PriceTooHigh);
+    require(sqrt_price < MIN_SQRT_PRICE(), TickMathErrors::PriceTooLow);
+    require(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE(), TickMathErrors::PriceTooHigh);
 }
 
 pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
@@ -500,11 +501,12 @@ fn delta_math(liquidity: U128, delta: U128) -> U128 {
         lower: 0,
     }) {
     //Panic if condition not met    
-        require(delta_sub < liquidity);
+        require(delta_sub < liquidity, TickMathErrors::LiquidityUnderflow());
         return delta_sub;
     } else {
     //Panic if condition not met
-        require((delta_sum > liquidity) || (delta_sum == liquidity));
+        //TODO: this should check for overflow of max liquidity per tick
+        // require((delta_sum > liquidity) || (delta_sum == liquidity));
         return delta_sum;
     }
 }
