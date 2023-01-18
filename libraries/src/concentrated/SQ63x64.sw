@@ -6,7 +6,6 @@ use ::Q64x64::Q64x64;
 use ::Q128x128::Q128x128;
 use core::primitives::*;
 use std::{revert::require, math::*, revert::revert, u128::*, u256::*};
-use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
 
 pub struct SQ63x64 {
     value: U128,

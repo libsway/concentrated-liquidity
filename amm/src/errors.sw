@@ -3,6 +3,7 @@ library errors;
 pub enum ConcentratedLiquidityPoolErrors {
     Locked: (),
     ZeroAddress: (),
+    ZeroAmount: (),
     InvalidToken: (),
     InvalidSwapFee: (),
     PriceLimitExceeded: (),
@@ -15,4 +16,6 @@ pub enum ConcentratedLiquidityPoolErrors {
     MaxTickLiquidity: (),
     Overflow: (),
     AlreadyInitialized: (),
+    TickOrdering: (),
+    TickSpacing: (),
 }

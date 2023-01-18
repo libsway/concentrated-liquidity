@@ -161,7 +161,7 @@ impl ConcentratedLiquidityPool for Contract {
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
         // sanity checks
-        require(msg_amount() > 0, ConcentratedLiquidityPoolErrors:ZeroAmount);
+        require(msg_amount() > 0, ConcentratedLiquidityPoolErrors::ZeroAmount);
         let token0 = storage.token0;
         let token1 = storage.token1;
         require(msg_asset_id() == token0 || msg_asset_id() == token1, ConcentratedLiquidityPoolErrors::InvalidToken);
@@ -369,7 +369,7 @@ impl ConcentratedLiquidityPool for Contract {
                         current_liquidity += storage.ticks.get(next_tick_to_cross).liquidity;
                     }
                     amount_out_no_fee -= max_dy - one_u128; // handle rounding issues
-                    let fee_amount = mul_div_rounding_up(max_dy, swap_fee, one_e_6_u128);
+                    let fee_amount = mul_div_rounding_up_u128(max_dy, swap_fee, one_e_6_u128);
                     if final_amount_out < (max_dy - swap_fee) || final_amount_out == (max_dy - swap_fee) {
                         break;
                     }
@@ -400,7 +400,7 @@ impl ConcentratedLiquidityPool for Contract {
                         current_liquidity -= storage.ticks.get(next_tick_to_cross).liquidity;
                     }
                     amount_out_no_fee -= max_dx + one_u128; // resolve rounding errors
-                    let fee_amount = mul_div_rounding_up(max_dx, swap_fee, one_e_6_u128);
+                    let fee_amount = mul_div_rounding_up_u128(max_dx, swap_fee, one_e_6_u128);
                     if final_amount_out < (max_dx - fee_amount) || final_amount_out == (max_dx - fee_amount){
                         break;
                     }
@@ -409,7 +409,7 @@ impl ConcentratedLiquidityPool for Contract {
                 }
             }
             current_price = next_tick_price;
-            if(next_tick_to_cross != next_tick) break;
+            if(next_tick_to_cross != next_tick) {break};
             next_tick_to_cross = next_tick;
         }
          
@@ -816,9 +816,9 @@ fn tick_insert(
     prev_above: I24, prev_below: I24
 ) -> I24 {
     // check inputs
-    require(below < above);
-    require(below > MIN_TICK() || below == MIN_TICK());
-    require(above < MAX_TICK() || above == MAX_TICK());
+    require(below < above, ConcentratedLiquidityPoolErrors::TickOrdering);
+    require(below > MIN_TICK() || below == MIN_TICK(), ConcentratedLiquidityPoolErrors::TickSpacing);
+    require(above < MAX_TICK() || above == MAX_TICK(), ConcentratedLiquidityPoolErrors::TickSpacing);
     
     let mut below_tick = storage.ticks.get(below);
     let mut nearest = storage.nearest_tick;
@@ -834,8 +834,8 @@ fn tick_insert(
         let below_next = if above < prev_tick.next_tick { above } else { prev_tick.next_tick };
 
         // check below ordering
-        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK());
-        require(prev_below < below && below < prev_above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK(), ConcentratedLiquidityPoolErrors::TickOrdering);
+        require(prev_below < below && below < prev_above, ConcentratedLiquidityPoolErrors::TickOrdering);
         
         if below < nearest || below == nearest {
             storage.ticks.insert(below, Tick {
@@ -870,9 +870,9 @@ fn tick_insert(
         let mut prev_next = prev_tick.next_tick;
 
         // check above order
-        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}));
-        require(prev_next > above);
-        require(prev_above < above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}), ConcentratedLiquidityPoolErrors::TickOrdering);
+        require(prev_next > above, ConcentratedLiquidityPoolErrors::TickOrdering);
+        require(prev_above < above, ConcentratedLiquidityPoolErrors::TickOrdering);
 
         let above_prev = if prev_tick.prev_tick < below { below } else { prev_above };
 
