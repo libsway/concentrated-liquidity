@@ -66,11 +66,5 @@ impl ExeguttorTests for Contract {
 
         let mut result = get_tick_at_price(test_number1);
         result
-        // let mut sqrt_price = Q64x64{value: U128::from((1,0))};
-        // // sqrt_price * sqrt_price;
-        // // SQ63x64{value: U128::from((0,0))}
-
-        // let mut price = SQ63x64{value: (sqrt_price * sqrt_price).value };
-        // price.binary_log().to_i24()
     }
 }
