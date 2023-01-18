@@ -41,7 +41,7 @@ impl TestToken for Contract {
 
     /// Deposit tokens back into the contract.
     fn deposit() {
-        assert(msg_amount() > 0);
+        require(msg_amount() > 0);
     }
 
     /// Mint and send this contracts native token to a destination contract.

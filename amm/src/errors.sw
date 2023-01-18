@@ -5,6 +5,7 @@ pub enum ConcentratedLiquidityPoolErrors {
     ZeroAddress: (),
     InvalidToken: (),
     InvalidSwapFee: (),
+    PriceLimitExceeded: (),
     LiquidityOverflow: (),
     Token0Missing: (),
     Token1Missing: (),

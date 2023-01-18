@@ -23,19 +23,19 @@ impl ExeguttorTests for Contract {
     fn test_most_sig_bit_idx() -> u64 {
         let mut test_number = SQ63x64{value: U128{upper: 2**63, lower:0}};
         let mut result = most_sig_bit_idx(test_number);
-        assert(result == 0);
+        require(result == 0);
 
         let mut test_number = SQ63x64{value: U128{upper: 2**63 + 2**62, lower:0}};
         let mut result = most_sig_bit_idx(test_number);
-        assert(result == 126);
+        require(result == 126);
 
         let mut test_number = SQ63x64{value: U128{upper: 2**62, lower:0}};
         let mut result = most_sig_bit_idx(test_number);
-        assert(result == 126);
+        require(result == 126);
 
         test_number = SQ63x64{value: U128{upper: 9, lower: 1<<63}};
         result = most_sig_bit_idx(test_number);
-        assert(result == 67);
+        require(result == 67);
 
         result
     }

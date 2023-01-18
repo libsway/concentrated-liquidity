@@ -5,11 +5,17 @@ use ::I24::I24;
 use ::Q64x64::Q64x64;
 use ::Q128x128::Q128x128;
 use core::primitives::*;
-use std::{assert::assert, math::*, revert::revert, u128::*, u256::*};
+use std::{revert::require, math::*, revert::revert, u128::*, u256::*};
 
 pub struct SQ63x64 {
     value: U128,
 }
+
+pub enum SQ63x64Error {
+    Overflow: (),
+    Underflow: (),
+}
+
 impl U128 {
     fn from_uint(value: u64) -> U128 {
         U128 {
@@ -19,12 +25,15 @@ impl U128 {
     }
 }
 impl SQ63x64 {
+    pub fn indent() -> u64 {
+        9223372036854775808u64
+    }  
+}
+
+impl SQ63x64 {
     pub fn u128(self) -> U128 {
         self.value
     }
-    fn indent() -> u64 {
-        9223372036854775808u64
-    }  
     pub fn from(_upper: u64, _lower: u64) -> Self {
         Self { 
             value: U128 {
@@ -34,7 +43,7 @@ impl SQ63x64 {
         }
     }
     pub fn from_uint(_upper: u64) -> Self {
-        // assert(_upper < Self::indent() || _upper === Self::indent());
+        require(_upper < Self::indent() || _upper == Self::indent(), SQ63x64Error::Overflow);
         Self { 
             value: U128 {
                 upper: _upper,
@@ -43,7 +52,7 @@ impl SQ63x64 {
         }
     }
     pub fn from_neg(_upper: u64) -> Self {
-        // assert(_upper < Self::indent() || _upper === Self::indent());
+        require(_upper < Self::indent() || _upper == Self::indent(), SQ63x64Error::Overflow);
         Self { 
             value: U128 {
                 upper: _upper + 9223372036854775808u64,
@@ -52,7 +61,7 @@ impl SQ63x64 {
         }
     }
     pub fn from_q64x64(_value: Q64x64) -> Self {
-        // assert(_value.upper < Self::indent() || _value.upper === Self::indent());
+        require(_value.value.upper < Self::indent() || _value.value.upper == Self::indent(), SQ63x64Error::Overflow);
         Self {
             value: U128 {
                 upper: _value.value.upper + 9223372036854775808u64,
@@ -61,8 +70,8 @@ impl SQ63x64 {
         }
     }
     fn from_q128x128(_value: Q128x128) -> Self {
-        // assert(value.a == 0);
-        // assert(_value.a < Self::indent() || _value.a === Self::indent());
+        require(_value.value.a == 0, SQ63x64Error::Overflow);
+        require(_value.value.a < Self::indent() || _value.value.a == Self::indent(), SQ63x64Error::Overflow);
         Self {
             value: U128 {
                 upper: _value.value.b + 9223372036854775808u64,
@@ -137,7 +146,7 @@ impl core::ops::Subtract for SQ63x64 {
     /// Subtract a SQ63x64 from a SQ63x64. Panics of overflow.
     fn subtract(self, other: Self) -> Self {
         // If trying to subtract a larger number, panic.
-        assert(self.value > other.value || self.value == other.value);
+        require(self.value > other.value || self.value == other.value, SQ63x64Error::Overflow);
         Self {
             value: self.value - other.value,
         }
@@ -221,7 +230,7 @@ impl core::ops::Divide for SQ63x64 {
 impl SQ63x64 {
     // Returns the log base 2 value
     pub fn binary_log(ref mut self) -> SQ63x64 {
-        assert(self.value.upper < 0x8000000000000000);
+        require(self.value.upper < 0x8000000000000000, SQ63x64Error::Overflow);
         let scaling_unit = U128::from((2,0));
         let two_u128 = U128::from((0,2)); 
         // find the most significant bit
@@ -232,8 +241,8 @@ impl SQ63x64 {
         let mut is_negative = false;
         let mut msb_offset = 0;
 
-        if msb_idx > 63 {
-            msb_offset = msb_idx - 64;
+        if msb_idx > 63u32 {
+            msb_offset = msb_idx - 64u32;
             log_result = SQ63x64::from_uint(msb_offset); 
         } else { 
             is_negative = true;     
@@ -289,7 +298,7 @@ fn log2(number: u64) -> u64 {
     }
 }
 pub fn most_sig_bit_idx(input: SQ63x64) -> u32 {
-    let mut msb_idx = 0;
+    let mut msb_idx: u32 = 0;
     if input.value.upper > 0 {
         msb_idx += 64;
         msb_idx += log2(input.value.upper);
@@ -343,12 +352,10 @@ fn sq63x64_divide() {
 fn sq63x64_most_sig_bit_idx() {
     let mut test_number = SQ63x64::from_uint(9);
     let msb = most_sig_bit_idx(test_number);
-    // assert(log.value.lower > 0);
 }
 
 #[test]
 fn sq63x64_binary_log() {
     let mut test_number = SQ63x64::from_uint(9);
     let log = test_number.binary_log();
-    // assert(log.value.lower > 0);
 }

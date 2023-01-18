@@ -9,6 +9,7 @@ use Q128x128::Q128x128;
 use Q64x64::Q64x64;
 
 pub enum FullMathError {
+    Overflow: (),
     DivisionByZero: (),
 }
 
@@ -21,7 +22,7 @@ fn log2(number: u64) -> u64 {
 }
 
 pub fn msb_idx(input: U256) -> u32 {
-    let mut msb_idx = 0;
+    let mut msb_idx: u32 = 0;
     if input.a > 0 {
         msb_idx += 192;
         msb_idx += log2(input.a);
@@ -44,7 +45,7 @@ impl U256 {
         let zero = U256::from((0, 0, 0, 0));
         let one = U256::from((0, 0, 0, 1));
 
-        assert(divisor != zero);
+        require(divisor != zero, FullMathError::DivisionByZero);
 
         //TODO: this evaluates to true even when it shouldn't
         //if divisor > self { return 0; }
@@ -67,7 +68,7 @@ impl U256 {
         let mut i =0;
 
         if self_msb_idx > div_msb_idx {
-            i = (self_msb_idx - div_msb_idx - 1);
+            i = (self_msb_idx - div_msb_idx - 1u32);
         } else {
             return one;
         }
@@ -90,24 +91,24 @@ impl U256 {
 
     fn mul(self, other: Self) -> Self {
             // Both upper words cannot be non-zero simultaneously. Otherwise, overflow is guaranteed.
-            assert(self.a == 0 || other.a == 0);
+            require(self.a == 0 || other.a == 0, FullMathError::Overflow);
 
             if self.a != 0 {
                 // If `self.a` is non-zero, all words of `other`, except for `d`, should be zero. 
                 // Otherwise, overflow is guaranteed.
-                assert(other.b == 0 && other.c == 0);
+                require(other.b == 0 && other.c == 0, FullMathError::Overflow);
                 U256::from((self.a * other.d, 0, 0, 0))
             } else if other.a != 0 {
                 // If `other.a` is non-zero, all words of `self`, except for `d`, should be zero.
                 // Otherwise, overflow is guaranteed.
-                assert(self.b == 0 && self.c == 0);
+                require(self.b == 0 && self.c == 0, FullMathError::Overflow);
                 U256::from((other.a * self.d, 0, 0, 0))
             } else {
                 if self.b != 0 {
                     // If `self.b` is non-zero, `other.b` has  to be zero. Otherwise, overflow is 
                     // guaranteed because:
                     // `other.b * 2 ^ (64 * 2) * self.b * 2 ^ (62 ^ 2) > 2 ^ (64 * 4)`
-                    assert(other.b == 0);
+                    require(other.b == 0, FullMathError::Overflow);
                     let result_b_d = self.b.overflowing_mul(other.d);
                     let result_c_c = self.c.overflowing_mul(other.c);
                     let result_c_d = self.c.overflowing_mul(other.d);
@@ -124,7 +125,7 @@ impl U256 {
                     // If `other.b` is nonzero, `self.b` has to be zero. Otherwise, overflow is 
                     // guaranteed because: 
                     // `other.b * 2 ^ (64 * 2) * self.b * 2 ^ (62 ^ 2) > 2 ^ (64 * 4)`.
-                    assert(self.b == 0);
+                    require(self.b == 0, FullMathError::Overflow);
                     let result_b_d = other.b.overflowing_mul(self.d);
                     let result_c_c = other.c.overflowing_mul(self.c);
                     let result_c_d = other.c.overflowing_mul(self.d);

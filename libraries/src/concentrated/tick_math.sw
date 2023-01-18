@@ -7,12 +7,19 @@ use ::Q64x64::{full_multiply, Q64x64};
 use ::Q128x128::Q128x128;
 use ::SQ63x64::SQ63x64;
 
+pub enum TickMathError {
+    PriceTooHigh: (),
+    PriceTooLow: (),
+}
+
 pub fn MIN_TICK() -> I24 {
-    return I24::from_neg(443636);
+    return I24::from_neg(443636u32);
 }
+
 pub fn MAX_TICK() -> I24 {
-    return I24::from_uint(436704);
+    return I24::from_uint(436704u32);
 }
+
 pub fn MIN_SQRT_PRICE() -> Q64x64 {
     Q64x64 {
         value: U128 {
@@ -37,8 +44,8 @@ impl U256 {
 }
 
 pub fn check_sqrt_price_bounds(sqrt_price: Q64x64) {
-    assert(sqrt_price < MIN_SQRT_PRICE());
-    assert(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE());
+    require(sqrt_price < MIN_SQRT_PRICE(), TickMathError::PriceTooLow);
+    require(sqrt_price > MAX_SQRT_PRICE() || sqrt_price == MAX_SQRT_PRICE(), TickMathError::PriceTooHigh);
 }
 
 pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
@@ -421,7 +428,7 @@ pub fn get_price_sqrt_at_tick(tick: I24) -> Q64x64 {
     } else {
         ratio
     };
-    if (tick > I24::from_uint(0)) {
+    if (tick > I24::from_uint(0u32)) {
         let ratio = U256::max() / ratio;
     }
     // shr 128 to downcast to a U128
@@ -493,11 +500,11 @@ fn delta_math(liquidity: U128, delta: U128) -> U128 {
         lower: 0,
     }) {
     //Panic if condition not met    
-        assert(delta_sub < liquidity);
+        require(delta_sub < liquidity);
         return delta_sub;
     } else {
     //Panic if condition not met
-        assert((delta_sum > liquidity) || (delta_sum == liquidity));
+        require((delta_sum > liquidity) || (delta_sum == liquidity));
         return delta_sum;
     }
 }
