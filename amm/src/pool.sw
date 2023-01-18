@@ -4,7 +4,6 @@ dep events;
 dep errors;
 
 use errors::ConcentratedLiquidityPoolErrors;
-use events::{BurnEvent, InitEvent, SwapEvent, MintEvent, FlashEvent};
 
 use std::{
     revert::require,
@@ -17,7 +16,6 @@ use std::{
     token::transfer,
     result::*,
     auth::*,
-    logging::log,
     call_frames::{contract_id ,msg_asset_id},
     context::msg_amount,
 };
@@ -146,17 +144,6 @@ impl ConcentratedLiquidityPool for Contract {
         storage.swap_fee = swap_fee;
         storage.tick_spacing = tick_spacing;
         storage.unlocked = true;
-
-        log(InitEvent {
-            pool_id: contract_id(),
-            token0: storage.token0,
-            token1: storage.token1,
-            swap_fee,
-            tick_spacing: tick_spacing,
-            init_price_upper: sqrt_price.value.upper,
-            init_price_lower: sqrt_price.value.lower,
-            init_tick: storage.nearest_tick.underlying
-        });
     }
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
@@ -316,17 +303,6 @@ impl ConcentratedLiquidityPool for Contract {
             token0_amount = amount_out;
         }
 
-        log(SwapEvent {
-            pool: contract_id(),
-            token0_amount,
-            token1_amount,
-            liquidity: storage.liquidity,
-            tick: storage.nearest_tick,
-            sqrt_price: storage.sqrt_price,
-            recipient,
-            sender
-        });
-
         amount_out
     }
 
@@ -468,17 +444,6 @@ impl ConcentratedLiquidityPool for Contract {
 
         let sender: Identity= msg_sender().unwrap();
 
-        log(MintEvent {
-            pool: contract_id(),
-            sender,
-            recipient,
-            token0_amount: amount0_desired,
-            token1_amount: amount1_desired,
-            liquidity_minted,
-            tick_lower:lower,
-            tick_upper:upper,
-        });
-
         liquidity_minted
     }
 
@@ -510,16 +475,6 @@ impl ConcentratedLiquidityPool for Contract {
 
         transfer(amount0, storage.token0, sender);
         transfer(amount1, storage.token1, sender);
-
-        log(BurnEvent {
-            pool: contract_id(),
-            sender,
-            token0_amount,
-            token1_amount,
-            liquidity_burned: liquidity_amount,
-            tick_lower:lower,
-            tick_upper:upper,
-        });
 
         let mut nearest_tick = storage.nearest_tick;
         storage.nearest_tick = tick_remove(lower, upper, liquidity_amount, nearest_tick);
