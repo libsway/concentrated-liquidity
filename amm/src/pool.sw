@@ -148,21 +148,21 @@ impl ConcentratedLiquidityPool for Contract {
         storage.tick_spacing = tick_spacing;
         storage.unlocked = true;
 
-        log(InitEvent {
-            pool_id: contract_id(),
-            token0: storage.token0,
-            token1: storage.token1,
-            swap_fee,
-            tick_spacing: tick_spacing,
-            init_price_upper: sqrt_price.value.upper,
-            init_price_lower: sqrt_price.value.lower,
-            init_tick: storage.nearest_tick.underlying
-        });
+        // log(InitEvent {
+        //     pool_id: contract_id(),
+        //     token0: storage.token0,
+        //     token1: storage.token1,
+        //     swap_fee,
+        //     tick_spacing: tick_spacing,
+        //     init_price_upper: sqrt_price.value.upper,
+        //     init_price_lower: sqrt_price.value.lower,
+        //     init_tick: storage.nearest_tick.underlying
+        // });
     }
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
         // sanity checks
-        require(msg_amount() > 0, ConcentratedLiquidityPoolErrors:ZeroAmount);
+        require(msg_amount() > 0, ConcentratedLiquidityPoolErrors::ZeroAmount);
         let token0 = storage.token0;
         let token1 = storage.token1;
         require(msg_asset_id() == token0 || msg_asset_id() == token1, ConcentratedLiquidityPoolErrors::InvalidToken);
@@ -317,16 +317,16 @@ impl ConcentratedLiquidityPool for Contract {
             token0_amount = amount_out;
         }
 
-        log(SwapEvent {
-            pool: contract_id(),
-            token0_amount,
-            token1_amount,
-            liquidity: storage.liquidity,
-            tick: storage.nearest_tick,
-            sqrt_price: storage.sqrt_price,
-            recipient,
-            sender
-        });
+        // log(SwapEvent {
+        //     pool: contract_id(),
+        //     token0_amount,
+        //     token1_amount,
+        //     liquidity: storage.liquidity,
+        //     tick: storage.nearest_tick,
+        //     sqrt_price: storage.sqrt_price,
+        //     recipient,
+        //     sender
+        // });
 
         amount_out
     }
@@ -410,7 +410,7 @@ impl ConcentratedLiquidityPool for Contract {
                 }
             }
             current_price = next_tick_price;
-            if(next_tick_to_cross != next_tick) break;
+            if(next_tick_to_cross != next_tick) { break };
             next_tick_to_cross = next_tick;
         }
          
@@ -469,16 +469,16 @@ impl ConcentratedLiquidityPool for Contract {
 
         let sender: Identity= msg_sender().unwrap();
 
-        log(MintEvent {
-            pool: contract_id(),
-            sender,
-            recipient,
-            token0_amount: amount0_desired,
-            token1_amount: amount1_desired,
-            liquidity_minted,
-            tick_lower:lower,
-            tick_upper:upper,
-        });
+        // log(MintEvent {
+        //     pool: contract_id(),
+        //     sender,
+        //     recipient,
+        //     token0_amount: amount0_desired,
+        //     token1_amount: amount1_desired,
+        //     liquidity_minted,
+        //     tick_lower:lower,
+        //     tick_upper:upper,
+        // });
 
         liquidity_minted
     }
@@ -512,15 +512,15 @@ impl ConcentratedLiquidityPool for Contract {
         transfer(amount0, storage.token0, sender);
         transfer(amount1, storage.token1, sender);
 
-        log(BurnEvent {
-            pool: contract_id(),
-            sender,
-            token0_amount,
-            token1_amount,
-            liquidity_burned: liquidity_amount,
-            tick_lower:lower,
-            tick_upper:upper,
-        });
+        // log(BurnEvent {
+        //     pool: contract_id(),
+        //     sender,
+        //     token0_amount,
+        //     token1_amount,
+        //     liquidity_burned: liquidity_amount,
+        //     tick_lower:lower,
+        //     tick_upper:upper,
+        // });
 
         let mut nearest_tick = storage.nearest_tick;
         storage.nearest_tick = tick_remove(lower, upper, liquidity_amount, nearest_tick);
@@ -817,9 +817,9 @@ fn tick_insert(
     prev_above: I24, prev_below: I24
 ) -> I24 {
     // check inputs
-    require(below < above);
-    require(below > MIN_TICK() || below == MIN_TICK());
-    require(above < MAX_TICK() || above == MAX_TICK());
+    require(below < above, ConcentratedLiquidityPoolErrors::InvalidTickRange);
+    require(below > MIN_TICK() || below == MIN_TICK(), ConcentratedLiquidityPoolErrors::InvalidLowerTick);
+    require(above < MAX_TICK() || above == MAX_TICK(), ConcentratedLiquidityPoolErrors::InvalidUpperTick);
     
     let mut below_tick = storage.ticks.get(below);
     let mut nearest = storage.nearest_tick;
@@ -835,8 +835,8 @@ fn tick_insert(
         let below_next = if above < prev_tick.next_tick { above } else { prev_tick.next_tick };
 
         // check below ordering
-        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK());
-        require(prev_below < below && below < prev_above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}) || prev_below == MIN_TICK(), ConcentratedLiquidityPoolErrors::InvalidLowerOldTick);
+        require(prev_below < below && below < prev_above, ConcentratedLiquidityPoolErrors::InvalidTickOrder);
         
         if below < nearest || below == nearest {
             storage.ticks.insert(below, Tick {
@@ -871,9 +871,9 @@ fn tick_insert(
         let mut prev_next = prev_tick.next_tick;
 
         // check above order
-        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}));
-        require(prev_next > above);
-        require(prev_above < above);
+        require(prev_tick.liquidity != (U128{upper: 0, lower: 0}), ConcentratedLiquidityPoolErrors::InvalidUpperOldTick);
+        require(prev_next > above, ConcentratedLiquidityPoolErrors::InvalidUpperTickOrder);
+        require(prev_above < above, ConcentratedLiquidityPoolErrors::InvalidUpperTickOrder);
 
         let above_prev = if prev_tick.prev_tick < below { below } else { prev_above };
 

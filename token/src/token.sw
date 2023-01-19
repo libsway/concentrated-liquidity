@@ -1,6 +1,9 @@
 contract;
 
+dep errors;
+
 use std::{context::*, token::*};
+use errors::TokenErrors;
 
 abi TestToken {
     fn mint_coins(mint_amount: u64);
@@ -41,7 +44,7 @@ impl TestToken for Contract {
 
     /// Deposit tokens back into the contract.
     fn deposit() {
-        require(msg_amount() > 0);
+        require(msg_amount() > 0, TokenErrors::ZeroAmount);
     }
 
     /// Mint and send this contracts native token to a destination contract.

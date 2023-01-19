@@ -203,16 +203,16 @@ impl ConcentratedLiquidityPool for Contract {
         storage.tick_spacing = tick_spacing;
         storage.unlocked = true;
 
-        log(InitEvent {
-            pool_id: contract_id(),
-            token0: storage.token0,
-            token1: storage.token1,
-            swap_fee,
-            tick_spacing: tick_spacing,
-            init_price_upper: sqrt_price.value.upper,
-            init_price_lower: sqrt_price.value.lower,
-            init_tick: storage.nearest_tick.underlying
-        });
+        // log(InitEvent {
+        //     pool_id: contract_id(),
+        //     token0: storage.token0,
+        //     token1: storage.token1,
+        //     swap_fee,
+        //     tick_spacing: tick_spacing,
+        //     init_price_upper: sqrt_price.value.upper,
+        //     init_price_lower: sqrt_price.value.lower,
+        //     init_tick: storage.nearest_tick.underlying
+        // });
     }
     #[storage(read, write)]
     fn swap(sqrt_price_limit: Q64x64, recipient: Identity) -> u64 {
@@ -233,16 +233,16 @@ impl ConcentratedLiquidityPool for Contract {
 
         let sender = msg_sender().unwrap();
 
-        log(SwapEvent {
-            pool: contract_id(),
-            token0_amount: msg_amount(),
-            token1_amount: msg_amount(),
-            liquidity: storage.liquidity,
-            tick: storage.nearest_tick,
-            sqrt_price: storage.sqrt_price,
-            recipient,
-            sender
-        });
+        // log(SwapEvent {
+        //     pool: contract_id(),
+        //     token0_amount: msg_amount(),
+        //     token1_amount: msg_amount(),
+        //     liquidity: storage.liquidity,
+        //     tick: storage.nearest_tick,
+        //     sqrt_price: storage.sqrt_price,
+        //     recipient,
+        //     sender
+        // });
 
         msg_amount()
     }
@@ -270,16 +270,16 @@ impl ConcentratedLiquidityPool for Contract {
 
         let sender: Identity= msg_sender().unwrap();
 
-        log(MintEvent {
-            pool: contract_id(),
-            sender,
-            recipient,
-            token0_amount: amount0_desired,
-            token1_amount: amount1_desired,
-            liquidity_minted,
-            tick_lower:lower,
-            tick_upper:upper,
-        });
+        // log(MintEvent {
+        //     pool: contract_id(),
+        //     sender,
+        //     recipient,
+        //     token0_amount: amount0_desired,
+        //     token1_amount: amount1_desired,
+        //     liquidity_minted,
+        //     tick_lower:lower,
+        //     tick_upper:upper,
+        // });
 
         liquidity_minted
     }
